@@ -694,6 +694,15 @@ button:disabled {
   font-weight: 700;
 }
 
+.table-action.danger {
+  border-color: #efc2c7;
+  color: var(--red);
+}
+
+.table-action.danger:hover {
+  background: #fff6f7;
+}
+
 .employee-action-buttons {
   display: flex;
   align-items: center;
@@ -881,6 +890,112 @@ button:disabled {
   border-radius: 7px;
 }
 
+.stock-form {
+  display: grid;
+  gap: 12px;
+}
+
+.stock-form .primary-button {
+  justify-self: start;
+  min-width: 140px;
+}
+
+.stock-deduction {
+  display: grid;
+  gap: 7px;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid #d7e8dd;
+  border-radius: 7px;
+  background: #f4fbf6;
+  color: #234135;
+  font-size: 13px;
+}
+
+.stock-deduction .short {
+  color: var(--red);
+  font-weight: 800;
+}
+
+.stock-capacity-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.stock-capacity-card {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid #d7e8dd;
+  border-left: 4px solid var(--green);
+  border-radius: 7px;
+  background: #fff;
+}
+
+.stock-capacity-card span,
+.stock-capacity-card small,
+.stock-capacity-card em {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.stock-capacity-card strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.stock-capacity-card b {
+  color: var(--green);
+  font-size: 22px;
+}
+
+.stock-material-table .data-head,
+.stock-material-table .data-row {
+  grid-template-columns: minmax(220px, 1fr) 150px 120px;
+  min-width: 520px;
+}
+
+.stock-material-table {
+  max-height: 420px;
+  overflow: auto;
+}
+
+.stock-movement-groups {
+  display: grid;
+  gap: 18px;
+}
+
+.stock-movement-group {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.stock-movement-group h3 {
+  margin: 0;
+  color: #2e3b4d;
+  font-size: 16px;
+}
+
+.stock-movement-table .data-head,
+.stock-movement-table .data-row {
+  grid-template-columns: 130px minmax(220px, 1fr) 150px minmax(260px, 1fr) 110px;
+  min-width: 880px;
+}
+
+.stock-movement-table {
+  max-height: 360px;
+  overflow: auto;
+}
+
+.stock-movement-table .data-row span:last-child {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 1180px) {
   .portal-shell { grid-template-columns: 210px minmax(0, 1fr); }
   .dashboard-grid { grid-template-columns: 1fr; }
@@ -888,7 +1003,8 @@ button:disabled {
   .panel:nth-child(2n + 1):last-child,
   .full-row-panel { grid-column: span 1; }
   .header-metrics,
-  .finance-summary { grid-template-columns: 1fr; }
+  .finance-summary,
+  .stock-capacity-grid { grid-template-columns: 1fr; }
   .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .employee-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .profile-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

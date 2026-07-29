@@ -231,6 +231,72 @@ const expenseCsvColumns = ["id", "employeeId", "employeeName", "category", "date
 const financeExportColumns = financeRegisterColumns;
 const TOAST_EVENT = "aimes-toast";
 
+const stockMaterials = [
+  { id: "oil", name: "Oil", unit: "L" },
+  { id: "bottle500", name: "500 ml Bottle", unit: "pcs" },
+  { id: "bottle1l", name: "1 L Bottle", unit: "pcs" },
+  { id: "bottle2l", name: "2 L Bottle", unit: "pcs" },
+  { id: "can5l", name: "5 L Can", unit: "pcs" },
+  { id: "can15kg", name: "15 kg Can", unit: "pcs" },
+  { id: "sticker500", name: "500 ml Sticker", unit: "pcs" },
+  { id: "sticker1l", name: "1 L Sticker", unit: "pcs" },
+  { id: "sticker2l", name: "2 L Sticker", unit: "pcs" },
+  { id: "sticker5l", name: "5 L Sticker", unit: "pcs" },
+  { id: "sticker15kg", name: "15 kg Sticker", unit: "pcs" },
+  { id: "bottleCap", name: "Bottle Cap", unit: "pcs" },
+  { id: "canCap", name: "Can Cap", unit: "pcs" },
+  { id: "band", name: "Band", unit: "pcs" },
+  { id: "plastic", name: "Plastic / Wrap", unit: "pcs" },
+  { id: "box500", name: "500 ml Box", unit: "pcs" },
+  { id: "box1l", name: "1 L Box", unit: "pcs" },
+  { id: "box2l", name: "2 L Box", unit: "pcs" },
+  { id: "box5l", name: "5 L Box", unit: "pcs" },
+  { id: "box15kg", name: "15 kg Box", unit: "pcs" }
+];
+const stockMaterialMap = Object.fromEntries(stockMaterials.map((material) => [material.id, material]));
+const stockProducts = [
+  { id: "p500", name: "500 ml Bottle", piecesPerCase: 24, drawPerPiece: { oil: 0.5, bottle500: 1, sticker500: 1, bottleCap: 1, band: 1 }, drawPerCase: { plastic: 1, box500: 1 } },
+  { id: "p1l", name: "1 L Bottle", piecesPerCase: 12, drawPerPiece: { oil: 1, bottle1l: 1, sticker1l: 1, bottleCap: 1, band: 1 }, drawPerCase: { plastic: 1 } },
+  { id: "p2l", name: "2 L Bottle", piecesPerCase: 6, drawPerPiece: { oil: 2, bottle2l: 1, sticker2l: 1, bottleCap: 1, band: 1 }, drawPerCase: { plastic: 1, box2l: 1 } },
+  { id: "p5l", name: "5 L Can", piecesPerCase: 4, drawPerPiece: { oil: 5, can5l: 1, sticker5l: 1, canCap: 1, band: 1 }, drawPerCase: { plastic: 1, box5l: 1 } },
+  { id: "p15kg", name: "15 kg Can", piecesPerCase: 1, drawPerPiece: { oil: 16.3, can15kg: 1, sticker15kg: 1, canCap: 1, band: 1 }, drawPerCase: { plastic: 1, box15kg: 1 } }
+];
+const initialStockLevels = Object.fromEntries(stockMaterials.map((material) => [material.id, 0]));
+
+function normalizeStock(stock = {}) {
+  return {
+    levels: { ...initialStockLevels, ...(stock.levels || {}) },
+    movements: Array.isArray(stock.movements) ? stock.movements : []
+  };
+}
+
+function productCaseDraw(product) {
+  const draw = {};
+  for (const [material, amount] of Object.entries(product.drawPerPiece)) {
+    draw[material] = (draw[material] || 0) + amount * product.piecesPerCase;
+  }
+  for (const [material, amount] of Object.entries(product.drawPerCase)) {
+    draw[material] = (draw[material] || 0) + amount;
+  }
+  return draw;
+}
+
+function productionCapacity(product, levels) {
+  const draw = productCaseDraw(product);
+  const limits = Object.entries(draw).map(([material, amount]) => ({
+    material,
+    cases: Math.floor((Number(levels[material]) || 0) / amount)
+  }));
+  const cases = limits.length ? Math.min(...limits.map((item) => item.cases)) : 0;
+  const limiting = limits.sort((left, right) => left.cases - right.cases)[0]?.material || "";
+  return { cases, pieces: cases * product.piecesPerCase, limiting };
+}
+
+function stockAmount(value) {
+  const number = Number(value || 0);
+  return Number.isInteger(number) ? number.toLocaleString("en-IN") : number.toLocaleString("en-IN", { maximumFractionDigits: 1 });
+}
+
 function toast(message, type = "success") {
   window.dispatchEvent(new CustomEvent(TOAST_EVENT, { detail: { id: uid("TOAST"), message, type } }));
 }
@@ -999,6 +1065,7 @@ const navItems = [
   { id: "logins", label: "Add Login", roles: ["admin"] },
   { id: "employees", label: "Employees" },
   { id: "finance", label: "Finance", roles: ["admin", "hr"] },
+  { id: "stock", label: "Stock", roles: ["admin", "hr"] },
   { id: "leave", label: "Leave" },
   { id: "expenses", label: "Expenses" },
   { id: "attendance", label: "Attendance" }
@@ -1068,6 +1135,7 @@ function AdminPage({ activePage, store, commit, commitAttendance, deleteAttendan
   if (activePage === "logins") return <DashboardGrid><AddLoginPanel commit={commit} /><LoginAccessTable logins={store.logins || []} commit={commit} className="full-row-panel" /></DashboardGrid>;
   if (activePage === "employees") return <DashboardGrid><AddEmployeePanel commit={commit} /><EmployeeTable employees={store.employees} commit={commit} canDelete className="full-row-panel" /></DashboardGrid>;
   if (activePage === "finance") return <DashboardGrid><AdminExpenseFormPanel store={store} commit={commit} createdBy="Admin" title="Add Debit Expense" /><FinancePanel store={store} commit={commit} canManage canExport className="full-row-panel" /></DashboardGrid>;
+  if (activePage === "stock") return <StockPage store={store} commit={commit} />;
   if (activePage === "leave") return <DashboardGrid><ApprovalPanel title="Leave Applications" items={store.leaves} kind="leaves" commit={commit} /><LeaveTable leaves={store.leaves} /></DashboardGrid>;
   if (activePage === "expenses") return <DashboardGrid><AdminExpenseFormPanel store={store} commit={commit} /><ApprovalPanel title="Expense Approvals" items={store.expenses} kind="expenses" commit={commit} className="full-row-panel" /><ExpenseTable expenses={store.expenses} className="full-row-panel" /></DashboardGrid>;
   if (activePage === "attendance") return <AttendancePage store={store} commit={commit} commitAttendance={commitAttendance} deleteAttendance={deleteAttendance} session={session} />;
@@ -1080,7 +1148,228 @@ function HrPage({ activePage, store, commit, commitAttendance, deleteAttendance,
   if (activePage === "expenses") return <DashboardGrid><ApprovalPanel title="Expense Approval Queue" items={store.expenses} kind="expenses" commit={commit} /><ExpenseTable expenses={store.expenses} /></DashboardGrid>;
   if (activePage === "attendance") return <AttendancePage store={store} commit={commit} commitAttendance={commitAttendance} deleteAttendance={deleteAttendance} session={session} />;
   if (activePage === "finance") return <DashboardGrid><AdminExpenseFormPanel store={store} commit={commit} createdBy="HR" title="Add Debit Expense" /><FinancePanel store={store} canExport className="full-row-panel" /></DashboardGrid>;
+  if (activePage === "stock") return <StockPage store={store} commit={commit} />;
   return <DashboardGrid><FinancePanel store={store} canExport className="full-row-panel" /><ApprovalPanel title="Expense Approval Queue" items={store.expenses} kind="expenses" commit={commit} className="full-row-panel" /></DashboardGrid>;
+}
+
+function StockPage({ store, commit }) {
+  const stock = normalizeStock(store.stock);
+  const [topUp, setTopUp] = useState({ material: "oil", quantity: "", note: "" });
+  const [dispatch, setDispatch] = useState({ product: "p2l", cases: "1", location: "" });
+  const selectedProduct = stockProducts.find((product) => product.id === dispatch.product) || stockProducts[0];
+  const dispatchCases = Math.max(0, parseInt(dispatch.cases, 10) || 0);
+  const dispatchDraw = productCaseDraw(selectedProduct);
+  const dispatchShortage = Object.entries(dispatchDraw).filter(([material, amount]) => amount * dispatchCases > Number(stock.levels[material] || 0));
+  const stockUpdates = stock.movements.filter((movement) => movement.type === "Stock Updated");
+  const dispatches = stock.movements.filter((movement) => movement.type === "Dispatch");
+
+  const commitStock = (updater) => {
+    commit((current) => {
+      const currentStock = normalizeStock(current.stock);
+      const nextStock = typeof updater === "function" ? updater(currentStock) : updater;
+      return { ...current, stock: normalizeStock(nextStock) };
+    });
+  };
+
+  const addMaterialStock = (event) => {
+    event.preventDefault();
+    const quantity = Number(topUp.quantity);
+    if (!quantity || quantity <= 0) {
+      toast("Enter a valid stock quantity.", "error");
+      return;
+    }
+    const material = stockMaterialMap[topUp.material];
+    commitStock((current) => ({
+      ...current,
+      levels: { ...current.levels, [topUp.material]: Number(current.levels[topUp.material] || 0) + quantity },
+      movements: [
+        { id: uid("STK"), type: "Stock Updated", date: today(), materialId: topUp.material, item: material.name, quantity, unit: material.unit, note: topUp.note || "Admin stock update" },
+        ...current.movements
+      ]
+    }));
+    setTopUp({ material: topUp.material, quantity: "", note: "" });
+    toast(`${material.name} stock updated.`);
+  };
+
+  const recordDispatch = (event) => {
+    event.preventDefault();
+    if (!dispatchCases) {
+      toast("Enter sold/exported case count.", "error");
+      return;
+    }
+    if (dispatchShortage.length) {
+      toast("Not enough raw materials for this dispatch.", "error");
+      return;
+    }
+    commitStock((current) => {
+      const nextLevels = { ...current.levels };
+      for (const [material, amount] of Object.entries(dispatchDraw)) {
+        nextLevels[material] = Number(nextLevels[material] || 0) - amount * dispatchCases;
+      }
+      return {
+        ...current,
+        levels: nextLevels,
+        movements: [
+          { id: uid("DSP"), type: "Dispatch", date: today(), productId: selectedProduct.id, item: selectedProduct.name, quantity: dispatchCases, unit: "cases", note: dispatch.location || "Export dispatch" },
+          ...current.movements
+        ]
+      };
+    });
+    setDispatch({ ...dispatch, cases: "1", location: "" });
+    toast(`${dispatchCases} case${dispatchCases > 1 ? "s" : ""} dispatched and stock deducted.`);
+  };
+
+  const deleteMovement = (movement) => {
+    const confirmed = window.confirm(`Delete this ${movement.type.toLowerCase()} record for ${movement.item}?`);
+    if (!confirmed) return;
+    commitStock((current) => {
+      const nextLevels = { ...current.levels };
+      if (movement.type === "Stock Updated") {
+        const materialId = movement.materialId || stockMaterials.find((material) => material.name === movement.item)?.id;
+        if (materialId) nextLevels[materialId] = Number(nextLevels[materialId] || 0) - Number(movement.quantity || 0);
+      }
+      if (movement.type === "Dispatch") {
+        const product = stockProducts.find((item) => item.id === movement.productId || item.name === movement.item);
+        if (product) {
+          const draw = productCaseDraw(product);
+          for (const [material, amount] of Object.entries(draw)) {
+            nextLevels[material] = Number(nextLevels[material] || 0) + amount * Number(movement.quantity || 0);
+          }
+        }
+      }
+      return {
+        ...current,
+        levels: nextLevels,
+        movements: current.movements.filter((item) => item.id !== movement.id)
+      };
+    });
+    toast(`${movement.type} record deleted.`);
+  };
+
+  return (
+    <DashboardGrid>
+      <Panel title="Stock Updater">
+        <form className="stock-form" onSubmit={addMaterialStock}>
+          <label>Material
+            <select value={topUp.material} onChange={(event) => setTopUp({ ...topUp, material: event.target.value })}>
+              {stockMaterials.map((material) => <option key={material.id} value={material.id}>{material.name}</option>)}
+            </select>
+          </label>
+          <label>Quantity
+            <input type="number" min="0" step="0.1" value={topUp.quantity} onChange={(event) => setTopUp({ ...topUp, quantity: event.target.value })} placeholder="0" />
+          </label>
+          <label>Note
+            <input value={topUp.note} onChange={(event) => setTopUp({ ...topUp, note: event.target.value })} placeholder="Monthly stock update" />
+          </label>
+          <button className="primary-button" type="submit">Add Stock</button>
+        </form>
+      </Panel>
+
+      <Panel title="Record Sold / Exported Cases">
+        <form className="stock-form" onSubmit={recordDispatch}>
+          <label>Pack
+            <select value={dispatch.product} onChange={(event) => setDispatch({ ...dispatch, product: event.target.value })}>
+              {stockProducts.map((product) => <option key={product.id} value={product.id}>{product.name} - {product.piecesPerCase} pcs/case</option>)}
+            </select>
+          </label>
+          <label>Cases Sold
+            <input type="number" min="1" value={dispatch.cases} onChange={(event) => setDispatch({ ...dispatch, cases: event.target.value })} />
+          </label>
+          <label>Location
+            <input value={dispatch.location} onChange={(event) => setDispatch({ ...dispatch, location: event.target.value })} placeholder="Kerala / export location" />
+          </label>
+          <button className="primary-button" type="submit" disabled={Boolean(dispatchShortage.length)}>Dispatch</button>
+        </form>
+        <div className="stock-deduction">
+          <strong>Raw material deduction for {dispatchCases || 0} case{dispatchCases === 1 ? "" : "s"}</strong>
+          {Object.entries(dispatchDraw).map(([material, amount]) => {
+            const required = amount * dispatchCases;
+            const available = Number(stock.levels[material] || 0);
+            return (
+              <span className={required > available ? "short" : ""} key={material}>
+                {stockMaterialMap[material].name}: {stockAmount(required)} / available {stockAmount(available)}
+              </span>
+            );
+          })}
+        </div>
+      </Panel>
+
+      <Panel title="Production Capacity" className="full-row-panel">
+        <div className="stock-capacity-grid">
+          {stockProducts.map((product) => {
+            const capacity = productionCapacity(product, stock.levels);
+            return (
+              <article className="stock-capacity-card" key={product.id}>
+                <span>{product.piecesPerCase} pcs / case</span>
+                <strong>{product.name}</strong>
+                <b>{stockAmount(capacity.cases)} cases</b>
+                <small>{stockAmount(capacity.pieces)} pieces can be produced</small>
+                <em>Limited by {stockMaterialMap[capacity.limiting]?.name || "stock"}</em>
+              </article>
+            );
+          })}
+        </div>
+      </Panel>
+
+      <Panel title="Raw Material Stock" className="full-row-panel">
+        <div className="data-table stock-material-table">
+          <div className="data-head">
+            <span>Material</span><span>Available</span><span>Unit</span>
+          </div>
+          {stockMaterials.map((material) => (
+            <div className="data-row" key={material.id}>
+              <span>{material.name}</span>
+              <span>{stockAmount(stock.levels[material.id])}</span>
+              <span>{material.unit}</span>
+            </div>
+          ))}
+        </div>
+      </Panel>
+
+      <Panel title="Stock Movement" className="full-row-panel">
+        {stock.movements.length ? (
+          <div className="stock-movement-groups">
+            <StockMovementGroup title="Stock Updation" rows={stockUpdates} emptyText="No stock updates yet." onDelete={deleteMovement} />
+            <StockMovementGroup title="Dispatching" rows={dispatches} emptyText="No dispatches yet." onDelete={deleteMovement} />
+          </div>
+        ) : <p className="empty-note">No stock movement yet.</p>}
+      </Panel>
+    </DashboardGrid>
+  );
+}
+
+function StockMovementGroup({ title, rows, emptyText, onDelete }) {
+  return (
+    <section className="stock-movement-group">
+      <h3>{title}</h3>
+      {rows.length ? (
+        <div className="data-table stock-movement-table">
+          <div className="data-head">
+            <span>Date</span><span>Item</span><span>Quantity</span><span>Note / Location</span><span>Action</span>
+          </div>
+          {rows.map((movement) => (
+            <div className="data-row" key={movement.id}>
+              <span>{movement.date}</span>
+              <span>{movement.item}</span>
+              <span>{stockAmount(movement.quantity)} {movement.unit}</span>
+              <span>{movement.note}</span>
+              <span>
+                <button type="button" className="icon-action danger" aria-label={`Delete ${movement.item} ${movement.type.toLowerCase()} record`} title="Delete record" onClick={() => onDelete(movement)}>
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 6h18" />
+                    <path d="M8 6V4h8v2" />
+                    <path d="M19 6l-1 14H6L5 6" />
+                    <path d="M10 11v5" />
+                    <path d="M14 11v5" />
+                  </svg>
+                </button>
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : <p className="empty-note">{emptyText}</p>}
+    </section>
+  );
 }
 
 function EmployeePage({ activePage, store, commit, commitAttendance, session }) {
