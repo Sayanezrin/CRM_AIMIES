@@ -1,0 +1,19 @@
+{
+  "name": "Aime's People",
+  "short_name": "Aime's",
+  "description": "Employee attendance, leave, expenses, and people management for Aime's.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef3f8",
+  "theme_color": "#007140",
+  "icons": [
+    {
+      "src": "/app-icon.png",
+      "sizes": "512x256",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
