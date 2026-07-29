@@ -13,7 +13,7 @@ const CHECKIN_LOCATION = {
 };
 
 const roles = {
-  admin: { title: "Admin", email: "sayanezrin@gmail.com", password: "admin123" },
+  admin: { title: "Admin", email: "sayanezrin@gmail.com", password: "Saya@123" },
   hr: { title: "HR / Accountant", email: "hr@aimes.local", password: "HR@123" },
   employee: { title: "Employee", email: "employee@aimes.local", password: "Employee@123" }
 };

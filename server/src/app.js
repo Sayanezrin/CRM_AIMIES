@@ -15,7 +15,7 @@ const appDataDir = path.join(serverRoot, "App_Data");
 const portalFilePath = path.join(appDataDir, "portal-store.json");
 
 const roles = {
-  admin: { title: "Admin", email: "sayanezrin@gmail.com", password: "admin123" },
+  admin: { title: "Admin", email: "sayanezrin@gmail.com", password: "Saya@123" },
   hr: { title: "HR / Accountant", email: "hr@aimes.local" },
   employee: { title: "Employee", email: "employee@aimes.local" }
 };
