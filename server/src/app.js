@@ -562,7 +562,12 @@ app.post("/api/auth/password", async (req, res) => {
 
   const registered = await findRegisteredUser(email);
 
-  if (email === roles.admin.email && selectedRole === "admin" && !registered?.passwordHash && password === roles.admin.password) {
+  if (
+    email === roles.admin.email
+    && selectedRole === "admin"
+    && password === roles.admin.password
+    && (!registered?.passwordHash || registered.mustChangePassword !== false)
+  ) {
     const user = { email, name: "Saya Nezrin", role: "admin", provider: "password", mustChangePassword: true };
     return res.json({ token: createToken(user), user });
   }
@@ -594,10 +599,12 @@ app.post("/api/auth/change-password", async (req, res) => {
   if (!models) return res.status(503).json({ error: "MongoDB storage is required to change passwords." });
 
   const registered = await findRegisteredUser(session.email);
-  const currentPasswordValid = session.email === roles.admin.email && !registered?.passwordHash
-    ? currentPassword === roles.admin.password
+  const isAdminFirstPassword = session.email === roles.admin.email && session.role === "admin";
+  const currentPasswordValid = isAdminFirstPassword
+    ? currentPassword === roles.admin.password || verifyUserPassword(currentPassword, registered)
     : verifyUserPassword(currentPassword, registered);
-  if (!registered || registered.role !== session.role || !currentPasswordValid) {
+  const roleValid = isAdminFirstPassword || (registered && registered.role === session.role);
+  if (!registered || !roleValid || !currentPasswordValid) {
     return res.status(401).json({ error: "Current password is incorrect." });
   }
 
