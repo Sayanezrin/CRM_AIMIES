@@ -330,6 +330,11 @@ button:disabled {
   color: #007140;
 }
 
+.api-status.fallback {
+  background: #eef5ff;
+  color: #245b9f;
+}
+
 .api-status.offline {
   background: #fff4df;
   color: var(--amber);

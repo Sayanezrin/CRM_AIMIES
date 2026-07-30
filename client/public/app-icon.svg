@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Aime's People">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Aimies People">
   <rect width="512" height="512" rx="96" fill="#006b3f"/>
   <ellipse cx="256" cy="234" rx="218" ry="126" fill="#fee82f"/>
   <ellipse cx="256" cy="234" rx="226" ry="134" fill="none" stroke="#007140" stroke-width="24"/>
-  <text x="94" y="275" fill="#007140" font-family="Georgia, 'Times New Roman', serif" font-size="110" font-style="italic">Aime's</text>
+  <text x="94" y="275" fill="#007140" font-family="Georgia, 'Times New Roman', serif" font-size="110" font-style="italic">Aimies</text>
   <path d="M112 337c95 8 162-40 300-4-121-9-190 61-300 4z" fill="#007140"/>
 </svg>

@@ -1,7 +1,7 @@
 {
-  "name": "Aime's People",
-  "short_name": "Aime's",
-  "description": "Employee attendance, leave, expenses, and people management for Aime's.",
+  "name": "Aimies People",
+  "short_name": "Aimies",
+  "description": "Employee attendance, leave, expenses, and people management for Aimies.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

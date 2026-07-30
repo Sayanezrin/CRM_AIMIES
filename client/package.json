@@ -1,12 +1,13 @@
 {
-  "name": "aimes-people-client",
+  "name": "aimies-people-client",
   "private": true,
   "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5174",
     "build": "vite build",
-    "preview": "vite preview --host 127.0.0.1 --port 4174"
+    "preview": "vite preview --host 127.0.0.1 --port 4174",
+    "test": "npm run build"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",

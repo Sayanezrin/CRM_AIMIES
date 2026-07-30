@@ -4,7 +4,7 @@ import { getModels } from "./database.js";
 const port = process.env.PORT || 5018;
  
 app.listen(port, "0.0.0.0", () => {
-  console.log(`Aime's People Node API listening on ${port}`);
+  console.log(`Aimies People Node API listening on ${port}`);
   getModels()
     .then((models) => {
       if (!models) console.log("MongoDB not configured. Using JSON fallback storage.");

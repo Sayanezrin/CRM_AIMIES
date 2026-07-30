@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 256" role="img" aria-label="Aimies">
+  <rect width="512" height="256" rx="34" fill="#fff"/>
+  <ellipse cx="238" cy="110" rx="186" ry="82" fill="#fee82f"/>
+  <ellipse cx="238" cy="110" rx="194" ry="90" fill="none" stroke="#007140" stroke-width="12"/>
+  <text x="88" y="142" fill="#007140" font-family="Georgia, 'Times New Roman', serif" font-size="86" font-style="italic">Aimies</text>
+  <path d="M92 186c78 8 138-29 267-7-114-2-166 46-267 7z" fill="#007140"/>
+  <path d="M259 44c10-23 27-32 48-34-7 20-18 35-41 43" fill="#007140"/>
+  <path d="M246 51c-21-23-45-27-72-17 17 17 38 25 68 23" fill="#007140"/>
+</svg>

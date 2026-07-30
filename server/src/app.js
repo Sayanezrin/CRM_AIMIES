@@ -7,17 +7,20 @@ import cors from "cors";
 import express from "express";
 import { OAuth2Client } from "google-auth-library";
 import helmet from "helmet";
-import { getModels, getModelsOrNull, getMongoConnectionStatus, isMongoConfigured } from "./database.js";
+import { getModels, getModelsOrNull, getMongoConnectionStatus, isMongoConfigured, isMongoRequired } from "./database.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const serverRoot = path.resolve(__dirname, "..");
 const appDataDir = path.join(serverRoot, "App_Data");
 const portalFilePath = path.join(appDataDir, "portal-store.json");
 
+const adminEmail = process.env.ADMIN_EMAIL || "sayanezrin@gmail.com";
+const adminPassword = process.env.ADMIN_PASSWORD || "";
+
 const roles = {
-  admin: { title: "Admin", email: "sayanezrin@gmail.com", password: "Saya@123" },
-  hr: { title: "HR / Accountant", email: "hr@aimes.local" },
-  employee: { title: "Employee", email: "employee@aimes.local" }
+  admin: { title: "Admin", email: adminEmail, password: adminPassword },
+  hr: { title: "HR / Accountant", email: "hr@aimies.local" },
+  employee: { title: "Employee", email: "employee@aimies.local" }
 };
 const sessionDurationSeconds = 30 * 24 * 60 * 60;
 
@@ -163,7 +166,7 @@ async function writePortalFile(payload) {
 }
 
 async function getPortalState() {
-  const models = await getModelsOrNull();
+  const models = isMongoRequired() ? await getModels() : await getModelsOrNull();
   if (models) {
     const document = await models.PortalState.findOne({ _id: "main" }).lean();
     const portal = document?.dataJson ? JSON.parse(document.dataJson) : null;
@@ -176,7 +179,7 @@ async function getPortalState() {
         .map((record) => normalizeAttendanceEmployee(record, normalizedPortal.employees))
     };
   }
-  return readPortalFile();
+  return normalizePortalState(await readPortalFile());
 }
 
 function normalizePortalState(payload) {
@@ -308,7 +311,7 @@ async function syncPortalAttendance(models, payload) {
 }
 
 async function savePortalState(payload) {
-  const models = await getModelsOrNull();
+  const models = isMongoRequired() ? await getModels() : await getModelsOrNull();
   if (models) {
     await syncPortalUsers(models, payload);
     await syncPortalAttendance(models, payload);
@@ -324,7 +327,7 @@ async function savePortalState(payload) {
 }
 
 async function savePortalAttendanceRecord(record) {
-  const models = await getModelsOrNull();
+  const models = isMongoRequired() ? await getModels() : await getModelsOrNull();
   const currentPortal = normalizePortalState(await getPortalState());
   const normalizedInput = normalizeAttendanceEmployee(record, currentPortal.employees);
   if (models) {
@@ -387,7 +390,7 @@ async function deletePortalAttendanceRecord(recordId) {
     throw error;
   }
 
-  const models = await getModelsOrNull();
+  const models = isMongoRequired() ? await getModels() : await getModelsOrNull();
   if (models) {
     await models.Attendance.deleteOne({ id });
     return {
@@ -508,17 +511,19 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get("/", (_req, res) => res.json({ ok: true, service: "AimesPeople.Api.Node" }));
+app.get("/", (_req, res) => res.json({ ok: true, service: "AimiesPeople.Api.Node" }));
 app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     checkedAt: new Date().toISOString(),
-    mongoConfigured: isMongoConfigured()
+    mongoConfigured: isMongoConfigured(),
+    mongoRequired: isMongoRequired()
   });
 });
 
 app.get("/api/health/mongodb", async (_req, res) => {
-  if (getMongoConnectionStatus() === "connecting") {
+  const status = getMongoConnectionStatus();
+  if (status === "connecting") {
     return res.json({
       ok: true,
       checkedAt: new Date().toISOString(),
@@ -530,7 +535,7 @@ app.get("/api/health/mongodb", async (_req, res) => {
   res.json({
     ok: true,
     checkedAt: new Date().toISOString(),
-    storage: models ? "mongodb" : getMongoConnectionStatus() === "connecting" ? "connecting" : "fallback"
+    storage: models ? "mongodb" : isMongoRequired() ? "unavailable" : getMongoConnectionStatus() === "connecting" ? "connecting" : "fallback"
   });
 });
 
@@ -541,7 +546,7 @@ app.get("/api/ping", async (_req, res) => {
     return res.json({
       ok: true,
       checkedAt,
-      storage: "fallback",
+      storage: isMongoRequired() ? "unavailable" : "fallback",
       warmed: false
     });
   }
@@ -565,6 +570,7 @@ app.post("/api/auth/password", async (req, res) => {
   if (
     email === roles.admin.email
     && selectedRole === "admin"
+    && roles.admin.password
     && password === roles.admin.password
     && (!registered?.passwordHash || registered.mustChangePassword !== false)
   ) {
@@ -601,7 +607,7 @@ app.post("/api/auth/change-password", async (req, res) => {
   const registered = await findRegisteredUser(session.email);
   const isAdminFirstPassword = session.email === roles.admin.email && session.role === "admin";
   const currentPasswordValid = isAdminFirstPassword
-    ? currentPassword === roles.admin.password || verifyUserPassword(currentPassword, registered)
+    ? (roles.admin.password && currentPassword === roles.admin.password) || verifyUserPassword(currentPassword, registered)
     : verifyUserPassword(currentPassword, registered);
   const roleValid = isAdminFirstPassword || (registered && registered.role === session.role);
   if (!registered || !roleValid || !currentPasswordValid) {
@@ -815,7 +821,7 @@ app.get("/api/attendance", async (req, res, next) => {
 app.post("/api/attendance/check-in", async (req, res, next) => {
   try {
     const { Attendance } = await getPeopleModels();
-    const userEmail = req.body.userEmail || "unknown@aimes.local";
+    const userEmail = req.body.userEmail || "unknown@aimies.local";
     const today = toDateString();
     const existing = await Attendance.findOne({ userEmail, date: today }).sort({ id: -1 }).lean();
     if (existing && !existing.checkOutAt) return res.status(201).json(existing);
@@ -883,8 +889,9 @@ app.post("/api/tasks", async (req, res, next) => {
 });
 
 app.use((error, _req, res, _next) => {
-  console.error(error);
-  res.status(500).json({ error: "Server error.", detail: process.env.NODE_ENV === "production" ? undefined : error.message });
+  const status = error.status || 500;
+  if (status >= 500 && status !== 503) console.error(error);
+  res.status(status).json({ error: status === 503 ? "MongoDB unavailable." : "Server error.", detail: process.env.NODE_ENV === "production" ? undefined : error.message });
 });
 
 export default app;

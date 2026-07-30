@@ -5,14 +5,21 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
+dotenv.config({ path: path.resolve(__dirname, "..", ".env"), override: true });
 dns.setDefaultResultOrder("ipv4first");
 
 const mongoConnectionString = process.env.MONGODB_URI || process.env.MONGODB_CONNECTION_STRING || "";
 const mongoDirectConnectionString = process.env.MONGODB_DIRECT_URI || "";
-const databaseName = process.env.MONGODB_DATABASE_NAME || "aimes_people";
+const mongoSeedlistHosts = (process.env.MONGODB_SEEDLIST_HOSTS || "")
+  .split(",")
+  .map((host) => host.trim())
+  .filter(Boolean);
+const mongoReplicaSet = process.env.MONGODB_REPLICA_SET || "";
+const databaseName = process.env.MONGODB_DATABASE_NAME || "aimies_people";
 const portalCollectionName = process.env.MONGODB_PORTAL_COLLECTION || "portalState";
-const connectionTimeoutMs = Number(process.env.MONGODB_CONNECTION_TIMEOUT_MS || 30000);
+const connectionTimeoutMs = Number(process.env.MONGODB_CONNECTION_TIMEOUT_MS || 5000);
+const retryIntervalMs = Number(process.env.MONGODB_RETRY_INTERVAL_MS || 5 * 60 * 1000);
+const mongoRequired = String(process.env.MONGODB_REQUIRED || "").trim().toLowerCase() === "true";
 const dnsServers = (process.env.MONGODB_DNS_SERVERS || "")
   .split(",")
   .map((server) => server.trim())
@@ -25,13 +32,31 @@ if (dnsServers.length) {
 let connectionPromise;
 let modelsPromise;
 let connectionStatus = "disconnected";
+let unavailableUntil = 0;
 
 function hasMongoConnection() {
-  return [mongoConnectionString, mongoDirectConnectionString].some((uri) => uri && !uri.includes("<db_password>"));
+  return [mongoConnectionString, mongoDirectConnectionString, getSeedlistConnectionString()].some((uri) => uri && !uri.includes("<db_password>"));
+}
+
+function getSeedlistConnectionString() {
+  if (!mongoSeedlistHosts.length || !mongoReplicaSet || !mongoConnectionString.startsWith("mongodb+srv://")) return "";
+
+  const match = mongoConnectionString.match(/^mongodb\+srv:\/\/([^@]+)@[^/?]+([^?]*)?(\?(.*))?$/);
+  if (!match) return "";
+
+  const [, auth, pathValue = "", , rawQuery = ""] = match;
+  const params = new URLSearchParams(rawQuery);
+  params.set("authSource", params.get("authSource") || "admin");
+  params.set("replicaSet", mongoReplicaSet);
+  params.set("tls", "true");
+
+  const hosts = mongoSeedlistHosts.map((host) => host.includes(":") ? host : `${host}:27017`).join(",");
+  return `mongodb://${auth}@${hosts}${pathValue || "/"}?${params.toString()}`;
 }
 
 function getConnectionTargets() {
   return [
+    { label: "seedlist", uri: getSeedlistConnectionString() },
     { label: "primary", uri: mongoConnectionString },
     { label: "direct", uri: mongoDirectConnectionString }
   ].filter((target, index, targets) => (
@@ -45,10 +70,15 @@ export function isMongoConfigured() {
   return hasMongoConnection();
 }
 
+export function isMongoRequired() {
+  return mongoRequired;
+}
+
 export function getMongoConnectionStatus() {
   if (!hasMongoConnection()) return "unconfigured";
   if (connectionStatus === "connected") return "connected";
   if (connectionStatus === "connecting") return "connecting";
+  if (Date.now() < unavailableUntil) return mongoRequired ? "unavailable" : "fallback";
   return "disconnected";
 }
 
@@ -127,24 +157,46 @@ function createModels(connection) {
   };
 }
 
+function timeoutAfter(ms, label) {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new Error(`MongoDB ${label} connection timed out after ${ms}ms.`)), ms);
+  });
+}
+
+function mongoRequiredError(message) {
+  const error = new Error(message);
+  error.status = 503;
+  return error;
+}
+
 export async function getModels() {
-  if (!hasMongoConnection()) return null;
+  if (!hasMongoConnection()) {
+    if (mongoRequired) throw mongoRequiredError("MongoDB is required but no connection string is configured.");
+    return null;
+  }
+  if (Date.now() < unavailableUntil) {
+    if (mongoRequired) throw mongoRequiredError("MongoDB is required but currently unavailable.");
+    return null;
+  }
 
   modelsPromise ??= (async () => {
     let lastError;
     for (const target of getConnectionTargets()) {
+      let connection;
       try {
         console.log(`MongoDB connection started (${target.label})`);
         connectionStatus = "connecting";
-        connectionPromise = mongoose.createConnection(target.uri, {
+        connection = mongoose.createConnection(target.uri, {
           dbName: databaseName,
           serverSelectionTimeoutMS: connectionTimeoutMs,
           connectTimeoutMS: connectionTimeoutMs,
           socketTimeoutMS: connectionTimeoutMs,
           family: 4
-        }).asPromise();
+        });
+        connectionPromise = connection.asPromise();
+        connectionPromise.catch(() => {});
 
-        const connection = await connectionPromise;
+        await Promise.race([connectionPromise, timeoutAfter(connectionTimeoutMs, target.label)]);
 
         console.log(`MongoDB Connected (${target.label})`);
         console.log("Host:", connection.host);
@@ -154,6 +206,7 @@ export async function getModels() {
         return createModels(connection);
       } catch (error) {
         lastError = error;
+        connection?.close().catch(() => {});
         connectionPromise = null;
         connectionStatus = "disconnected";
         console.error(`MongoDB ${target.label} connection failed:`, error.message);
@@ -161,7 +214,13 @@ export async function getModels() {
     }
 
     modelsPromise = null;
-    throw lastError || new Error("MongoDB connection failed.");
+    connectionStatus = mongoRequired ? "unavailable" : "fallback";
+    unavailableUntil = Date.now() + retryIntervalMs;
+    if (mongoRequired) {
+      throw mongoRequiredError(lastError?.message || "MongoDB connection failed.");
+    }
+    console.error(`MongoDB unavailable. Using JSON fallback storage until ${new Date(unavailableUntil).toISOString()}.`, lastError?.message || "MongoDB connection failed.");
+    return null;
   })();
 
   return modelsPromise;

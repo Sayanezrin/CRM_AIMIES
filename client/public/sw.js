@@ -1,4 +1,4 @@
-const CACHE_NAME = "aimes-people-v1";
+const CACHE_NAME = "aimies-people-v1";
 const APP_SHELL = ["/manifest.webmanifest", "/app-icon.png"];
 
 self.addEventListener("install", (event) => {

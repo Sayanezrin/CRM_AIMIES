@@ -1,5 +1,5 @@
 {
-  "name": "aimes-people-api",
+  "name": "aimies-people-api",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "check": "node --check src/index.js"
+    "check": "node --check src/index.js",
+    "test": "npm run check"
   },
   "dependencies": {
     "cors": "^2.8.5",

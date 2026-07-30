@@ -1,5 +1,5 @@
 {
-  "name": "aimes-people-system",
+  "name": "aimies-people-system",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -8,7 +8,8 @@
     "server": "cd server && npm run dev",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "build": "cd client && npm install && npm run build && cd .. && node scripts/copy-client-dist.mjs",
-    "server:check": "cd server && npm run check"
+    "server:check": "cd server && npm run check",
+    "test": "npm run server:check && cd client && npm run build"
   },
   "dependencies": {
     "cors": "^2.8.5",

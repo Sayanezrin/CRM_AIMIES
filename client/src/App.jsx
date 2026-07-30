@@ -1,11 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
-import aimesLogoImage from "./assets/aimes-logo.png";
+import aimiesLogoImage from "./assets/aimies-logo.svg";
 
-const STORAGE_KEY = "aimes.people.role.portal";
-const SESSION_KEY = "aimes.people.role.session";
-const LOCAL_PASSWORDS_KEY = "aimes.people.local.passwords";
-const REMEMBERED_EMAIL_KEY = "aimes.people.remembered.email";
+const STORAGE_KEY = "aimies.people.role.portal";
+const SESSION_KEY = "aimies.people.role.session";
+const LOCAL_PASSWORDS_KEY = "aimies.people.local.passwords";
+const REMEMBERED_EMAIL_KEY = "aimies.people.remembered.email";
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://127.0.0.1:5018" : "");
+const DEFAULT_ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || "sayanezrin@gmail.com";
+const LOCAL_ADMIN_PASSWORD = import.meta.env.VITE_LOCAL_ADMIN_PASSWORD || "";
+const ALLOW_LOCAL_FALLBACK_LOGIN = import.meta.env.DEV && import.meta.env.VITE_ALLOW_LOCAL_FALLBACK_LOGIN !== "false";
 const CHECKIN_LOCATION = {
   latitude: Number(import.meta.env.VITE_CHECKIN_LATITUDE || 10.011327),
   longitude: Number(import.meta.env.VITE_CHECKIN_LONGITUDE || 76.3607931),
@@ -13,9 +16,9 @@ const CHECKIN_LOCATION = {
 };
 
 const roles = {
-  admin: { title: "Admin", email: "sayanezrin@gmail.com", password: "Saya@123" },
-  hr: { title: "HR / Accountant", email: "hr@aimes.local", password: "HR@123" },
-  employee: { title: "Employee", email: "employee@aimes.local", password: "Employee@123" }
+  admin: { title: "Admin", email: DEFAULT_ADMIN_EMAIL, password: LOCAL_ADMIN_PASSWORD },
+  hr: { title: "HR / Accountant", email: "hr@aimies.local" },
+  employee: { title: "Employee", email: "employee@aimies.local" }
 };
 
 const seedState = {
@@ -140,7 +143,7 @@ function getLocalPasswordLogin({ email, password, selectedRole, store }) {
   const normalizedRole = normalizeRole(selectedRole);
 
   if (normalizedEmail === roles.admin.email) {
-    if (normalizedRole !== "admin" || password.trim() !== roles.admin.password) return null;
+    if (normalizedRole !== "admin" || !roles.admin.password || password.trim() !== roles.admin.password) return null;
     return { email: normalizedEmail, name: "Saya Nezrin", role: "admin", provider: "local-password", token: `local-${Date.now()}`, mustChangePassword: true };
   }
 
@@ -229,7 +232,7 @@ const financeRegisterColumns = [{ key: "date", label: "Date" }, ...financePrimar
 const ledgerCsvColumns = ["id", "type", "date", "account", "category", "amount", "note", "createdBy", ...financePrimaryColumns];
 const expenseCsvColumns = ["id", "employeeId", "employeeName", "category", "date", "amount", "notes", "status", "submittedAt", "createdBy", "receiptName"];
 const financeExportColumns = financeRegisterColumns;
-const TOAST_EVENT = "aimes-toast";
+const TOAST_EVENT = "aimies-toast";
 
 const stockMaterials = [
   { id: "oil", name: "Oil", unit: "L" },
@@ -707,6 +710,11 @@ function App() {
       } else if (payload.storage === "connecting") {
         healthFailuresRef.current = 0;
         setApiStatus((current) => current === "connected" ? "connected" : "connecting");
+      } else if (payload.storage === "fallback") {
+        healthFailuresRef.current = 0;
+        setApiStatus("fallback");
+      } else if (payload.storage === "unavailable") {
+        setApiStatus("offline");
       } else {
         healthFailuresRef.current += 1;
         if (healthFailuresRef.current >= 2) setApiStatus("offline");
@@ -883,7 +891,7 @@ function InstallAppNotice({ installPrompt, onPromptUsed }) {
   return (
     <section className="install-app-notice" aria-label="Install mobile app notice">
       <div>
-        <strong>Download Aime&apos;s People on your phone</strong>
+        <strong>Download Aimies People on your phone</strong>
         <span>{isIos ? "Tap Share, then Add to Home Screen." : "Install it as a mobile web app for faster check-in."}</span>
       </div>
       <button type="button" className="primary-button" onClick={installApp}>{installPrompt ? "Install App" : "How to Install"}</button>
@@ -920,12 +928,14 @@ function LoginScreen({ store, onLogin }) {
       toast("Signed in successfully.");
       onLogin({ ...login.user, token: login.token });
     } catch (error) {
-      const localLogin = getLocalPasswordLogin({ ...form, selectedRole, store });
-      if (localLogin) {
-        writeRememberedEmail(form.email);
-        toast("Signed in with local fallback storage.");
-        onLogin(localLogin);
-        return;
+      if (ALLOW_LOCAL_FALLBACK_LOGIN) {
+        const localLogin = getLocalPasswordLogin({ ...form, selectedRole, store });
+        if (localLogin) {
+          writeRememberedEmail(form.email);
+          toast("Signed in with local fallback storage.");
+          onLogin(localLogin);
+          return;
+        }
       }
       setError(error.status === 401
         ? "Check the selected dashboard, email, and password."
@@ -936,7 +946,7 @@ function LoginScreen({ store, onLogin }) {
   return (
     <div className="login-page">
       <section className="login-copy">
-        <img src={aimesLogoImage} alt="Aime's" />
+        <img src={aimiesLogoImage} alt="Aimies" />
         <h1>Work smarter. Track better. Approve faster.</h1>
         <p>Choose one of the three logins to manage employee records, finance entries, approvals, attendance, leave, and reimbursements.</p>
       </section>
@@ -1042,7 +1052,7 @@ function PasswordChangeScreen({ session, onChanged, onLogout }) {
   return (
     <div className="login-page password-change-page">
       <section className="login-copy">
-        <img src={aimesLogoImage} alt="Aime's" />
+        <img src={aimiesLogoImage} alt="Aimies" />
         <h1>Set your new password</h1>
         <p>Your first password is only for the first sign in. Create a private password before opening the dashboard.</p>
       </section>
@@ -1079,7 +1089,7 @@ function Sidebar({ session, activePage, onPageChange, onLogout }) {
   const availableItems = getNavItemsForRole(session.role);
   return (
     <aside className="sidebar">
-      <img src={aimesLogoImage} alt="" />
+      <img src={aimiesLogoImage} alt="" />
       <nav>
         <span className="nav-pill">{session.name}</span>
         {availableItems.map((item) => (
@@ -1106,7 +1116,9 @@ function Header({ session, store, activePage, apiStatus }) {
     ? "Backend storage connected"
     : apiStatus === "connecting"
       ? "Backend storage connecting"
-      : "Offline fallback storage";
+      : apiStatus === "fallback"
+        ? "Local JSON storage"
+        : "MongoDB unavailable";
   return (
     <header className="page-header">
       <div>
@@ -2878,7 +2890,7 @@ function FinancePanel({ store, commit, canManage = false, canExport = false, cla
 
   const downloadPeriodReport = (period) => {
     const periodFinanceRows = financeRows.filter((row) => isWithinPeriod(row.date, period));
-    downloadFinanceRegisterExcel(`aimes-${period}-finance-register.xls`, periodFinanceRows);
+    downloadFinanceRegisterExcel(`aimies-${period}-finance-register.xls`, periodFinanceRows);
   };
 
   const downloadRangeReport = () => {
@@ -2887,7 +2899,7 @@ function FinancePanel({ store, commit, canManage = false, canExport = false, cla
       return;
     }
     const rangeLabel = `${fromDate || "start"}-to-${toDate || "today"}`;
-    downloadFinanceRegisterExcel(`aimes-finance-register-${rangeLabel}.xls`, filteredFinanceRows);
+    downloadFinanceRegisterExcel(`aimies-finance-register-${rangeLabel}.xls`, filteredFinanceRows);
   };
 
   const deleteFinanceRecord = (row) => {
