@@ -17,8 +17,17 @@ if ("serviceWorker" in navigator) {
       });
     });
   } else {
-    navigator.serviceWorker.getRegistrations?.().then((registrations) => {
-      registrations.forEach((registration) => registration.unregister());
+    navigator.serviceWorker.getRegistrations?.().then(async (registrations) => {
+      if (!registrations.length) {
+        window.sessionStorage.removeItem("aimies.dev.swReloaded");
+        return;
+      }
+
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+      if (!window.sessionStorage.getItem("aimies.dev.swReloaded")) {
+        window.sessionStorage.setItem("aimies.dev.swReloaded", "true");
+        window.location.reload();
+      }
     }).catch(() => {
       // Local development should continue even if cleanup is blocked.
     });
