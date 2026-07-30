@@ -10,9 +10,17 @@ createRoot(document.getElementById("root")).render(
 );
 
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {
-      // The app remains usable when service workers are unavailable.
+  if (import.meta.env.PROD) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js").catch(() => {
+        // The app remains usable when service workers are unavailable.
+      });
     });
-  });
+  } else {
+    navigator.serviceWorker.getRegistrations?.().then((registrations) => {
+      registrations.forEach((registration) => registration.unregister());
+    }).catch(() => {
+      // Local development should continue even if cleanup is blocked.
+    });
+  }
 }
