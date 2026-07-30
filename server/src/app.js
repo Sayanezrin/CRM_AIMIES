@@ -70,6 +70,7 @@ const lists = {
 };
 
 const tokenSecret = process.env.APP_AUTH_SECRET || "local-development-token-secret-change-before-production";
+const passwordHashSecret = process.env.PASSWORD_HASH_SECRET || "aimies-password-hash-v1";
 const googleClientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || "";
 const googleClient = new OAuth2Client(googleClientId || undefined);
 function normalizeRole(role) {
@@ -91,12 +92,42 @@ function initialPasswordForUser(user) {
 }
 
 function hashPassword(password) {
+  return crypto.createHmac("sha256", passwordHashSecret).update(String(password || "")).digest("hex");
+}
+
+function legacyHashPassword(password) {
   return crypto.createHmac("sha256", tokenSecret).update(String(password || "")).digest("hex");
 }
 
 function verifyUserPassword(password, user) {
-  if (user?.passwordHash) return hashPassword(password) === user.passwordHash;
+  if (user?.passwordHash) {
+    return hashPassword(password) === user.passwordHash || legacyHashPassword(password) === user.passwordHash;
+  }
   return String(password || "") === initialPasswordForUser(user);
+}
+
+async function seedConfiguredAdmin(models) {
+  if (!models || !roles.admin.email) return;
+
+  const adminRecord = {
+    email: roles.admin.email.trim().toLowerCase(),
+    name: "Saya Nezrin",
+    role: "admin",
+    status: "Active",
+    mustChangePassword: false,
+    updatedAt: new Date()
+  };
+
+  if (roles.admin.password) {
+    adminRecord.passwordHash = hashPassword(roles.admin.password);
+    adminRecord.passwordChangedAt = new Date();
+  }
+
+  await models.PortalUser.updateOne(
+    { email: adminRecord.email },
+    { $set: adminRecord },
+    { upsert: true }
+  );
 }
 
 function base64UrlEncode(value) {
@@ -238,7 +269,9 @@ function normalizeAttendanceEmployee(record, employees = []) {
 async function syncPortalUsers(models, payload) {
   if (!models) return;
   const users = [...(payload.logins || []), ...(payload.employees || [])];
-  const activeEmails = [];
+  const activeEmails = roles.admin.email ? [roles.admin.email.trim().toLowerCase()] : [];
+  await seedConfiguredAdmin(models);
+
   for (const user of users) {
     const email = user.email?.trim().toLowerCase();
     if (!email) continue;
@@ -423,6 +456,7 @@ async function findRegisteredUser(email) {
 
   const models = await getModelsOrNull();
   if (models) {
+    if (email === roles.admin.email) await seedConfiguredAdmin(models);
     const user = await models.PortalUser.findOne({ email }).lean();
     if (user) {
       return {
