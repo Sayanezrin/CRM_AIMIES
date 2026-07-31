@@ -1235,7 +1235,7 @@ function sellerBillText(bill) {
 function SellerBillingPage({ store, commit, session }) {
   const customers = store.sellerCustomers || [];
   const bills = store.sellerBills || [];
-  const [customer, setCustomer] = useState({ name: "", phone: "", address: "", gstin: "", state: "Kerala" });
+  const [customer, setCustomer] = useState({ name: "", phone: "", address: "", gstin: "", state: "Kerala", stateCode: "32" });
   const [billInfo, setBillInfo] = useState({ documentType: "retail", paymentMode: "Cash", taxPercent: "0", destination: "", vehicleNumber: "", irn: "", ackNo: "", ackDate: "", ewayBillNo: "", signedQr: "", note: "" });
   const [line, setLine] = useState({ product: "oil1l", customName: "", quantity: "1", amount: "" });
   const [items, setItems] = useState([]);
@@ -1248,7 +1248,7 @@ function SellerBillingPage({ store, commit, session }) {
 
   const selectCustomer = (phone) => {
     const savedCustomer = customers.find((item) => item.phone === phone);
-    if (savedCustomer) setCustomer({ name: savedCustomer.name, phone: savedCustomer.phone, address: savedCustomer.address || "", gstin: savedCustomer.gstin || "", state: savedCustomer.state || "Kerala" });
+    if (savedCustomer) setCustomer({ name: savedCustomer.name, phone: savedCustomer.phone, address: savedCustomer.address || "", gstin: savedCustomer.gstin || "", state: savedCustomer.state || "Kerala", stateCode: savedCustomer.stateCode || "32" });
   };
 
   const addItem = (event) => {
@@ -1287,6 +1287,7 @@ function SellerBillingPage({ store, commit, session }) {
     const customerAddress = customer.address.trim();
     const customerGstin = customer.gstin.trim().toUpperCase();
     const customerState = customer.state.trim() || "Kerala";
+    const customerStateCode = customer.stateCode.trim() || "32";
     const isTaxInvoice = billInfo.documentType === "tax";
     const irn = billInfo.irn.trim();
     if (isTaxInvoice && (!customerGstin || !irn)) {
@@ -1295,6 +1296,10 @@ function SellerBillingPage({ store, commit, session }) {
     }
     if (!customerName || !customerPhone) {
       toast("Enter buyer name and phone number.", "error");
+      return;
+    }
+    if (billTotal >= 50000 && (!customerAddress || !customerState || !customerStateCode)) {
+      toast("For bills of Rs. 50,000 or more, enter buyer address, state, and state code.", "error");
       return;
     }
     if (!items.length) {
@@ -1318,7 +1323,8 @@ function SellerBillingPage({ store, commit, session }) {
       customerAddress,
       customerGstin,
       customerState,
-      placeOfSupply: customerState,
+      customerStateCode,
+      placeOfSupply: `${customerState}, Code: ${customerStateCode}`,
       paymentMode: billInfo.paymentMode,
       taxPercent,
       cgst: taxAmount / 2,
@@ -1343,6 +1349,7 @@ function SellerBillingPage({ store, commit, session }) {
         address: customerAddress,
         gstin: customerGstin,
         state: customerState,
+        stateCode: customerStateCode,
         lastBillAt: bill.createdAt,
         totalBills: currentCustomers.find((item) => item.phone === customerPhone)?.totalBills || 0
       };
@@ -1357,7 +1364,7 @@ function SellerBillingPage({ store, commit, session }) {
       };
     });
     setItems([]);
-    setCustomer({ name: "", phone: "", address: "", gstin: "", state: "Kerala" });
+    setCustomer({ name: "", phone: "", address: "", gstin: "", state: "Kerala", stateCode: "32" });
     setBillInfo({ documentType: "retail", paymentMode: "Cash", taxPercent: "0", destination: "", vehicleNumber: "", irn: "", ackNo: "", ackDate: "", ewayBillNo: "", signedQr: "", note: "" });
     toast("Bill generated and customer list updated.");
   };
@@ -1385,7 +1392,7 @@ function SellerBillingPage({ store, commit, session }) {
       <Panel title="Generate Local Sale Bill" className="seller-bill-panel">
         <div className="seller-compliance-note">
           <strong>GST compliance check</strong>
-          <span>For B2B/export GST tax invoices, generate IRN/QR through the authorised IRP first, then enter IRN/Ack details here. Use Retail Sale Bill only for normal local retail sales where e-invoice is not required.</span>
+          <span>The printed bill uses the same invoice pattern for every amount. For bills of Rs. 50,000 or more, buyer address, state, and state code are required. For B2B/export GST tax invoices, generate IRN/QR through the authorised IRP first, then enter IRN/Ack details here.</span>
         </div>
         <form className="seller-bill-form" onSubmit={generateBill}>
           <label>Document Type
@@ -1399,6 +1406,7 @@ function SellerBillingPage({ store, commit, session }) {
           <label>Address<input value={customer.address} onChange={(event) => setCustomer({ ...customer, address: event.target.value })} placeholder="Buyer address" /></label>
           <label>GSTIN Optional<input value={customer.gstin} onChange={(event) => setCustomer({ ...customer, gstin: event.target.value })} placeholder="GST number if available" /></label>
           <label>State / Place of Supply<input value={customer.state} onChange={(event) => setCustomer({ ...customer, state: event.target.value })} placeholder="Kerala" /></label>
+          <label>State Code<input value={customer.stateCode} onChange={(event) => setCustomer({ ...customer, stateCode: event.target.value })} placeholder="32" /></label>
           <label>Payment Mode
             <select value={billInfo.paymentMode} onChange={(event) => setBillInfo({ ...billInfo, paymentMode: event.target.value })}>
               <option value="Cash">Cash</option>
@@ -1475,7 +1483,7 @@ function SellerBillingPage({ store, commit, session }) {
       ) : null}
 
       <Panel title="Customer List" className="full-row-panel">
-        {customers.length ? <DataTable rows={customers} columns={["name", "phone", "address", "gstin", "state", "totalBills", "lastBillAt"]} /> : <p className="empty-note">Customers will appear automatically after bills are generated.</p>}
+        {customers.length ? <DataTable rows={customers} columns={["name", "phone", "address", "gstin", "state", "stateCode", "totalBills", "lastBillAt"]} /> : <p className="empty-note">Customers will appear automatically after bills are generated.</p>}
       </Panel>
 
       <Panel title="Bill History" className="full-row-panel">
