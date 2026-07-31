@@ -8,6 +8,8 @@ const REMEMBERED_EMAIL_KEY = "aimies.people.remembered.email";
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://127.0.0.1:5018" : "");
 const DEFAULT_ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || "sayanezrin@gmail.com";
 const LOCAL_ADMIN_PASSWORD = import.meta.env.VITE_LOCAL_ADMIN_PASSWORD || "";
+const ACCOUNTANT_EMAIL = import.meta.env.VITE_ACCOUNTANT_EMAIL || "";
+const OWNER_WHATSAPP_NUMBER = import.meta.env.VITE_OWNER_WHATSAPP_NUMBER || "";
 const ALLOW_LOCAL_FALLBACK_LOGIN = import.meta.env.DEV && import.meta.env.VITE_ALLOW_LOCAL_FALLBACK_LOGIN !== "false";
 const CHECKIN_LOCATION = {
   latitude: Number(import.meta.env.VITE_CHECKIN_LATITUDE || 10.011327),
@@ -28,7 +30,9 @@ const seedState = {
   ledger: [],
   expenses: [],
   leaves: [],
-  attendance: []
+  attendance: [],
+  sellerCustomers: [],
+  sellerBills: []
 };
 
 function today() {
@@ -268,6 +272,15 @@ const stockProducts = [
   { id: "p2l", name: "2 L Bottle", piecesPerCase: 6, drawPerPiece: { oil: 2, bottle2l: 1, sticker2l: 1, bottleCap: 1, band: 1 }, drawPerCase: { plastic: 1, box2l: 1 } },
   { id: "p5l", name: "5 L Can", piecesPerCase: 4, drawPerPiece: { oil: 5, can5l: 1, sticker5l: 1, canCap: 1, band: 1 }, drawPerCase: { plastic: 1, box5l: 1 } },
   { id: "p15kg", name: "15 kg Can", piecesPerCase: 1, drawPerPiece: { oil: 16.3, can15kg: 1, sticker15kg: 1, canCap: 1, band: 1 }, drawPerCase: { plastic: 1, box15kg: 1 } }
+];
+const sellerOilItems = [
+  { id: "oil500", name: "0.5 Liter Oil", unit: "piece" },
+  { id: "oil1l", name: "1 Liter Oil", unit: "piece" },
+  { id: "oil2l", name: "2 Liter Oil", unit: "piece" },
+  { id: "box12", name: "Box Oil - 12 Pieces", unit: "box" },
+  { id: "box16", name: "Box Oil - 16 Pieces", unit: "box" },
+  { id: "box24", name: "Box Oil - 24 Pieces", unit: "box" },
+  { id: "custom", name: "Custom Oil Item", unit: "item" }
 ];
 const initialStockLevels = Object.fromEntries(stockMaterials.map((material) => [material.id, 0]));
 
@@ -1078,11 +1091,12 @@ function PasswordChangeScreen({ session, onChanged, onLogout }) {
 const navItems = [
   { id: "home", label: "Home" },
   { id: "logins", label: "Add Login", roles: ["admin"] },
-  { id: "employees", label: "Employees", roles: ["admin", "hr", "employee", "localSeller"] },
+  { id: "employees", label: "Employees", roles: ["admin", "hr", "employee"] },
+  { id: "sales", label: "Billing", roles: ["localSeller"] },
   { id: "finance", label: "Finance", roles: ["admin", "hr"] },
   { id: "stock", label: "Stock", roles: ["admin", "hr"] },
   { id: "leave", label: "Leave", roles: ["admin", "hr", "employee"] },
-  { id: "expenses", label: "Expenses", roles: ["admin", "hr", "employee", "localSeller"] },
+  { id: "expenses", label: "Expenses", roles: ["admin", "hr", "employee"] },
   { id: "attendance", label: "Attendance", roles: ["admin", "hr", "employee", "localSeller"] }
 ];
 
@@ -1171,10 +1185,283 @@ function HrPage({ activePage, store, commit, commitAttendance, deleteAttendance,
 }
 
 function LocalSellerPage({ activePage, store, commit, commitAttendance, session }) {
-  if (activePage === "employees") return <EmployeePage activePage="employees" store={store} commit={commit} commitAttendance={commitAttendance} session={session} />;
-  if (activePage === "expenses") return <EmployeePage activePage="expenses" store={store} commit={commit} commitAttendance={commitAttendance} session={session} />;
   if (activePage === "attendance") return <EmployeePage activePage="attendance" store={store} commit={commit} commitAttendance={commitAttendance} session={session} />;
-  return <EmployeePage activePage="home" store={store} commit={commit} commitAttendance={commitAttendance} session={session} />;
+  return <SellerBillingPage store={store} commit={commit} session={session} />;
+}
+
+function normalizePhone(value) {
+  return String(value || "").replace(/[^\d+]/g, "");
+}
+
+function sellerBillText(bill) {
+  const lines = [
+    "Aimies",
+    "Local Oil Sale Bill",
+    `Bill No: ${bill.billNumber}`,
+    `Date: ${bill.date}`,
+    `Buyer: ${bill.customerName}`,
+    `Phone: ${bill.customerPhone}`,
+    "",
+    "Items:",
+    ...bill.items.map((item, index) => `${index + 1}. ${item.name} - ${stockAmount(item.quantity)} ${item.unit} - ${money(item.amount)}`),
+    "",
+    `Total: ${money(bill.total)}`,
+    `Seller: ${bill.sellerName}`,
+    "",
+    "Thank you for buying from Aimies."
+  ];
+  return lines.join("\n");
+}
+
+function SellerBillingPage({ store, commit, session }) {
+  const customers = store.sellerCustomers || [];
+  const bills = store.sellerBills || [];
+  const [customer, setCustomer] = useState({ name: "", phone: "" });
+  const [line, setLine] = useState({ product: "oil1l", customName: "", quantity: "1", amount: "" });
+  const [items, setItems] = useState([]);
+  const latestBill = bills[0] || null;
+  const selectedItem = sellerOilItems.find((item) => item.id === line.product) || sellerOilItems[0];
+  const billTotal = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+
+  const selectCustomer = (phone) => {
+    const savedCustomer = customers.find((item) => item.phone === phone);
+    if (savedCustomer) setCustomer({ name: savedCustomer.name, phone: savedCustomer.phone });
+  };
+
+  const addItem = (event) => {
+    event.preventDefault();
+    const quantity = Number(line.quantity);
+    const amount = Number(line.amount);
+    const name = line.product === "custom" ? line.customName.trim() : selectedItem.name;
+    if (!name || !quantity || quantity <= 0 || !amount || amount <= 0) {
+      toast("Enter item, quantity, and amount.", "error");
+      return;
+    }
+    setItems((current) => [
+      ...current,
+      {
+        id: uid("ITEM"),
+        productId: line.product,
+        name,
+        quantity,
+        unit: selectedItem.unit,
+        amount
+      }
+    ]);
+    setLine({ product: line.product, customName: "", quantity: "1", amount: "" });
+  };
+
+  const removeItem = (itemId) => {
+    setItems((current) => current.filter((item) => item.id !== itemId));
+  };
+
+  const generateBill = (event) => {
+    event.preventDefault();
+    const customerName = customer.name.trim();
+    const customerPhone = normalizePhone(customer.phone);
+    if (!customerName || !customerPhone) {
+      toast("Enter buyer name and phone number.", "error");
+      return;
+    }
+    if (!items.length) {
+      toast("Add at least one oil item before generating bill.", "error");
+      return;
+    }
+
+    const bill = {
+      id: uid("BILL"),
+      billNumber: `LS-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${String(bills.length + 1).padStart(3, "0")}`,
+      date: new Date().toLocaleString("en-IN"),
+      customerName,
+      customerPhone,
+      items,
+      total: billTotal,
+      sellerName: session.name,
+      sellerEmail: session.email,
+      createdAt: new Date().toISOString()
+    };
+
+    commit((current) => {
+      const currentCustomers = current.sellerCustomers || [];
+      const nextCustomer = {
+        id: currentCustomers.find((item) => item.phone === customerPhone)?.id || uid("CUST"),
+        name: customerName,
+        phone: customerPhone,
+        lastBillAt: bill.createdAt,
+        totalBills: currentCustomers.find((item) => item.phone === customerPhone)?.totalBills || 0
+      };
+      nextCustomer.totalBills += 1;
+      return {
+        ...current,
+        sellerBills: [bill, ...(current.sellerBills || [])],
+        sellerCustomers: [
+          nextCustomer,
+          ...currentCustomers.filter((item) => item.phone !== customerPhone)
+        ]
+      };
+    });
+    setItems([]);
+    setCustomer({ name: "", phone: "" });
+    toast("Bill generated and customer list updated.");
+  };
+
+  const shareByEmail = (bill) => {
+    const subject = encodeURIComponent(`Aimies Local Sale Bill ${bill.billNumber}`);
+    const body = encodeURIComponent(sellerBillText(bill));
+    const to = ACCOUNTANT_EMAIL ? encodeURIComponent(ACCOUNTANT_EMAIL) : "";
+    window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+  };
+
+  const shareByWhatsApp = (bill) => {
+    const text = encodeURIComponent(sellerBillText(bill));
+    const phone = OWNER_WHATSAPP_NUMBER ? normalizePhone(OWNER_WHATSAPP_NUMBER).replace(/^\+/, "") : "";
+    window.open(`https://wa.me/${phone}?text=${text}`, "_blank", "noopener,noreferrer");
+  };
+
+  const printBill = (bill) => {
+    const printWindow = window.open("", "_blank", "noopener,noreferrer");
+    if (!printWindow) {
+      toast("Allow popups to print the bill.", "error");
+      return;
+    }
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${escapeHtml(bill.billNumber)}</title>
+          <style>
+            body { font-family: Arial, sans-serif; color: #172033; margin: 32px; }
+            header, footer { text-align: center; border: 2px solid #007140; padding: 14px; }
+            h1 { color: #007140; margin: 0; }
+            table { width: 100%; border-collapse: collapse; margin: 24px 0; }
+            th, td { border: 1px solid #cfd9e6; padding: 10px; text-align: left; }
+            th { background: #eef7f1; }
+            .total { text-align: right; font-size: 20px; font-weight: 700; }
+          </style>
+        </head>
+        <body>
+          <header><h1>Aimies</h1><p>Local Oil Sale Bill</p></header>
+          <main>
+            <p><strong>Bill No:</strong> ${escapeHtml(bill.billNumber)}</p>
+            <p><strong>Date:</strong> ${escapeHtml(bill.date)}</p>
+            <p><strong>Buyer:</strong> ${escapeHtml(bill.customerName)}</p>
+            <p><strong>Phone:</strong> ${escapeHtml(bill.customerPhone)}</p>
+            <table>
+              <thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Amount</th></tr></thead>
+              <tbody>${bill.items.map((item) => `<tr><td>${escapeHtml(item.name)}</td><td>${stockAmount(item.quantity)}</td><td>${escapeHtml(item.unit)}</td><td>${money(item.amount)}</td></tr>`).join("")}</tbody>
+            </table>
+            <p class="total">Total: ${money(bill.total)}</p>
+          </main>
+          <footer><strong>Thank you for buying from Aimies.</strong><p>Seller: ${escapeHtml(bill.sellerName)}</p></footer>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  return (
+    <DashboardGrid>
+      <Panel title="Generate Local Sale Bill" className="seller-bill-panel">
+        <form className="seller-bill-form" onSubmit={generateBill}>
+          <label>Buyer Name<input value={customer.name} onChange={(event) => setCustomer({ ...customer, name: event.target.value })} placeholder="Customer name" /></label>
+          <label>Phone Number<input value={customer.phone} onChange={(event) => setCustomer({ ...customer, phone: event.target.value })} placeholder="Customer phone" /></label>
+          {customers.length ? (
+            <label>Saved Customer
+              <select value="" onChange={(event) => selectCustomer(event.target.value)}>
+                <option value="">Select previous customer</option>
+                {customers.map((item) => <option key={item.id} value={item.phone}>{item.name} - {item.phone}</option>)}
+              </select>
+            </label>
+          ) : null}
+          <button className="primary-button" type="submit">Generate Bill</button>
+        </form>
+      </Panel>
+
+      <Panel title="Add Oil Item" className="seller-bill-panel">
+        <form className="seller-bill-form" onSubmit={addItem}>
+          <label>Oil Item
+            <select value={line.product} onChange={(event) => setLine({ ...line, product: event.target.value })}>
+              {sellerOilItems.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+            </select>
+          </label>
+          {line.product === "custom" ? <label>Custom Item<input value={line.customName} onChange={(event) => setLine({ ...line, customName: event.target.value })} placeholder="Oil item name" /></label> : null}
+          <label>Quantity<input type="number" min="0" step="0.1" value={line.quantity} onChange={(event) => setLine({ ...line, quantity: event.target.value })} /></label>
+          <label>Manual Amount<input type="number" min="0" step="0.01" value={line.amount} onChange={(event) => setLine({ ...line, amount: event.target.value })} placeholder="Amount collected" /></label>
+          <button className="primary-button" type="submit">Add Item</button>
+        </form>
+      </Panel>
+
+      <Panel title="Current Bill Items" className="full-row-panel">
+        {items.length ? (
+          <>
+            <div className="data-table seller-item-table">
+              <div className="data-head"><span>Item</span><span>Qty</span><span>Amount</span><span>Action</span></div>
+              {items.map((item) => (
+                <div className="data-row" key={item.id}>
+                  <span>{item.name}</span>
+                  <span>{stockAmount(item.quantity)} {item.unit}</span>
+                  <span>{money(item.amount)}</span>
+                  <span><button type="button" className="icon-action danger" title="Remove item" aria-label={`Remove ${item.name}`} onClick={() => removeItem(item.id)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16" /><path d="M9 7V5h6v2" /><path d="M6 7l1 14h10l1-14" /></svg></button></span>
+                </div>
+              ))}
+            </div>
+            <p className="seller-total">Current total: {money(billTotal)}</p>
+          </>
+        ) : <p className="empty-note">Add oil items to start a bill.</p>}
+      </Panel>
+
+      {latestBill ? (
+        <Panel title="Generated Bill" className="full-row-panel seller-preview-panel">
+          <BillPreview bill={latestBill} />
+          <div className="seller-share-actions">
+            <button type="button" className="primary-button" onClick={() => printBill(latestBill)}>Print Bill</button>
+            <button type="button" className="secondary-button" onClick={() => shareByEmail(latestBill)}>Send to Accountant Email</button>
+            <button type="button" className="secondary-button" onClick={() => shareByWhatsApp(latestBill)}>Send to Owner WhatsApp</button>
+          </div>
+          <p className="empty-note">Email and WhatsApp open your device apps. Fully automatic sending needs email and WhatsApp API credentials.</p>
+        </Panel>
+      ) : null}
+
+      <Panel title="Customer List" className="full-row-panel">
+        {customers.length ? <DataTable rows={customers} columns={["name", "phone", "totalBills", "lastBillAt"]} /> : <p className="empty-note">Customers will appear automatically after bills are generated.</p>}
+      </Panel>
+
+      <Panel title="Bill History" className="full-row-panel">
+        {bills.length ? <DataTable rows={bills.map((bill) => ({ billNumber: bill.billNumber, customerName: bill.customerName, customerPhone: bill.customerPhone, total: bill.total, date: bill.date }))} columns={["billNumber", "customerName", "customerPhone", "total", "date"]} /> : <p className="empty-note">No local seller bills generated yet.</p>}
+      </Panel>
+    </DashboardGrid>
+  );
+}
+
+function BillPreview({ bill }) {
+  return (
+    <article className="seller-bill-preview">
+      <header>
+        <strong>Aimies</strong>
+        <span>Local Oil Sale Bill</span>
+      </header>
+      <div className="seller-bill-meta">
+        <span><b>Bill No</b>{bill.billNumber}</span>
+        <span><b>Date</b>{bill.date}</span>
+        <span><b>Buyer</b>{bill.customerName}</span>
+        <span><b>Phone</b>{bill.customerPhone}</span>
+      </div>
+      <div className="data-table seller-item-table">
+        <div className="data-head"><span>Item</span><span>Qty</span><span>Amount</span></div>
+        {bill.items.map((item) => (
+          <div className="data-row" key={item.id}>
+            <span>{item.name}</span>
+            <span>{stockAmount(item.quantity)} {item.unit}</span>
+            <span>{money(item.amount)}</span>
+          </div>
+        ))}
+      </div>
+      <footer>
+        <span>Seller: {bill.sellerName}</span>
+        <strong>Total: {money(bill.total)}</strong>
+      </footer>
+    </article>
+  );
 }
 
 function StockPage({ store, commit }) {

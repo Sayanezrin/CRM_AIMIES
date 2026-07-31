@@ -996,6 +996,113 @@ button:disabled {
   overflow: auto;
 }
 
+.seller-bill-panel {
+  align-self: stretch;
+}
+
+.seller-bill-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.seller-bill-form .primary-button {
+  min-height: 42px;
+}
+
+.seller-item-table .data-head,
+.seller-item-table .data-row {
+  grid-template-columns: minmax(260px, 1fr) 150px 150px 90px;
+  min-width: 680px;
+}
+
+.seller-bill-preview .seller-item-table .data-head,
+.seller-bill-preview .seller-item-table .data-row {
+  grid-template-columns: minmax(260px, 1fr) 150px 150px;
+  min-width: 560px;
+}
+
+.seller-total {
+  justify-self: end;
+  margin: 0;
+  color: var(--green);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.seller-preview-panel {
+  background: #fbfefd;
+}
+
+.seller-bill-preview {
+  display: grid;
+  gap: 16px;
+  border: 1px solid #b9dec7;
+  border-radius: 8px;
+  background: #fff;
+  padding: 18px;
+}
+
+.seller-bill-preview header,
+.seller-bill-preview footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #d7e8dd;
+  border-radius: 7px;
+  background: #effaf1;
+  padding: 12px 14px;
+}
+
+.seller-bill-preview header strong {
+  color: var(--green);
+  font-size: 24px;
+}
+
+.seller-bill-preview header span,
+.seller-bill-preview footer span {
+  color: var(--muted);
+}
+
+.seller-bill-preview footer strong {
+  color: var(--green);
+  font-size: 18px;
+}
+
+.seller-bill-meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.seller-bill-meta span {
+  display: grid;
+  gap: 4px;
+  min-height: 62px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 10px;
+  color: #344154;
+}
+
+.seller-bill-meta b {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.seller-share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.seller-share-actions button {
+  min-width: 180px;
+}
+
 .stock-movement-table .data-row span:last-child {
   white-space: normal;
   overflow-wrap: anywhere;
@@ -1009,7 +1116,9 @@ button:disabled {
   .full-row-panel { grid-column: span 1; }
   .header-metrics,
   .finance-summary,
-  .stock-capacity-grid { grid-template-columns: 1fr; }
+  .stock-capacity-grid,
+  .seller-bill-form,
+  .seller-bill-meta { grid-template-columns: 1fr; }
   .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .employee-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .profile-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1046,6 +1155,13 @@ button:disabled {
 
   .role-picker {
     grid-template-columns: 1fr;
+  }
+
+  .seller-bill-preview header,
+  .seller-bill-preview footer,
+  .seller-share-actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .portal-shell {
