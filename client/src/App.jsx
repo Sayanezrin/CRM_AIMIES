@@ -1319,44 +1319,8 @@ function SellerBillingPage({ store, commit, session }) {
   };
 
   const printBill = (bill) => {
-    const printWindow = window.open("", "_blank", "noopener,noreferrer");
-    if (!printWindow) {
-      toast("Allow popups to print the bill.", "error");
-      return;
-    }
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>${escapeHtml(bill.billNumber)}</title>
-          <style>
-            body { font-family: Arial, sans-serif; color: #172033; margin: 32px; }
-            header, footer { text-align: center; border: 2px solid #007140; padding: 14px; }
-            h1 { color: #007140; margin: 0; }
-            table { width: 100%; border-collapse: collapse; margin: 24px 0; }
-            th, td { border: 1px solid #cfd9e6; padding: 10px; text-align: left; }
-            th { background: #eef7f1; }
-            .total { text-align: right; font-size: 20px; font-weight: 700; }
-          </style>
-        </head>
-        <body>
-          <header><h1>Aimies</h1><p>Local Oil Sale Bill</p></header>
-          <main>
-            <p><strong>Bill No:</strong> ${escapeHtml(bill.billNumber)}</p>
-            <p><strong>Date:</strong> ${escapeHtml(bill.date)}</p>
-            <p><strong>Buyer:</strong> ${escapeHtml(bill.customerName)}</p>
-            <p><strong>Phone:</strong> ${escapeHtml(bill.customerPhone)}</p>
-            <table>
-              <thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Amount</th></tr></thead>
-              <tbody>${bill.items.map((item) => `<tr><td>${escapeHtml(item.name)}</td><td>${stockAmount(item.quantity)}</td><td>${escapeHtml(item.unit)}</td><td>${money(item.amount)}</td></tr>`).join("")}</tbody>
-            </table>
-            <p class="total">Total: ${money(bill.total)}</p>
-          </main>
-          <footer><strong>Thank you for buying from Aimies.</strong><p>Seller: ${escapeHtml(bill.sellerName)}</p></footer>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
+    window.document.title = `${bill.billNumber} - Aimies Bill`;
+    window.print();
   };
 
   return (

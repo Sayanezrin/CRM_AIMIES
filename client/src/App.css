@@ -1349,3 +1349,58 @@ button:disabled {
     min-width: 720px;
   }
 }
+
+@media print {
+  body {
+    background: #fff;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .seller-bill-preview,
+  .seller-bill-preview * {
+    visibility: visible;
+  }
+
+  .seller-bill-preview {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    color: #172033;
+  }
+
+  .seller-bill-preview header,
+  .seller-bill-preview footer {
+    border: 2px solid #007140;
+    background: #fff;
+    color: #172033;
+  }
+
+  .seller-bill-preview header strong {
+    font-size: 34px;
+  }
+
+  .seller-bill-preview .data-table {
+    overflow: visible;
+    border: 1px solid #cfd9e6;
+  }
+
+  .seller-bill-preview .seller-item-table .data-head,
+  .seller-bill-preview .seller-item-table .data-row {
+    min-width: 0;
+    grid-template-columns: minmax(260px, 1fr) 120px 140px;
+  }
+
+  .seller-share-actions,
+  .install-app-notice,
+  .toast-stack {
+    display: none !important;
+  }
+}
