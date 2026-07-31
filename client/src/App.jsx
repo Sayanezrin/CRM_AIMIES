@@ -1437,7 +1437,7 @@ function SellerBillingPage({ store, commit, session }) {
         </form>
       </Panel>
 
-      <Panel title="Add Oil Item" className="seller-bill-panel">
+      <Panel title="Add Oil Item" className="seller-bill-panel full-row-panel">
         <form className="seller-bill-form" onSubmit={addItem}>
           <label>Oil Item
             <select value={line.product} onChange={(event) => setLine({ ...line, product: event.target.value })}>

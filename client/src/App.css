@@ -996,15 +996,19 @@ button:disabled {
   overflow: auto;
 }
 
-.seller-bill-panel {
-  align-self: stretch;
-}
-
 .seller-bill-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   align-items: end;
+}
+
+.seller-bill-panel {
+  align-self: start;
+}
+
+.seller-bill-panel .seller-bill-form {
+  align-content: start;
 }
 
 .seller-bill-form .primary-button {
