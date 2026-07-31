@@ -1042,6 +1042,36 @@ button:disabled {
   min-width: 760px;
 }
 
+.seller-customer-table,
+.seller-history-table {
+  max-height: 360px;
+  overflow: auto;
+}
+
+.seller-customer-table .data-head,
+.seller-customer-table .data-row {
+  grid-template-columns: 180px 140px 260px 180px 150px 90px 190px 100px;
+  min-width: 1290px;
+}
+
+.seller-history-table .data-head,
+.seller-history-table .data-row {
+  grid-template-columns: 170px 160px 180px 140px 130px 130px 200px 150px;
+  min-width: 1260px;
+}
+
+.seller-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compact-action-button {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 6px;
+}
+
 .seller-total {
   justify-self: end;
   margin: 0;

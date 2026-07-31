@@ -1239,7 +1239,9 @@ function SellerBillingPage({ store, commit, session }) {
   const [billInfo, setBillInfo] = useState({ documentType: "retail", paymentMode: "Cash", taxPercent: "0", destination: "", vehicleNumber: "", irn: "", ackNo: "", ackDate: "", ewayBillNo: "", signedQr: "", note: "" });
   const [line, setLine] = useState({ product: "oil1l", customName: "", quantity: "1", amount: "" });
   const [items, setItems] = useState([]);
+  const [printTargetBill, setPrintTargetBill] = useState(null);
   const latestBill = bills[0] || null;
+  const previewBill = printTargetBill || latestBill;
   const selectedItem = sellerOilItems.find((item) => item.id === line.product) || sellerOilItems[0];
   const billSubtotal = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const taxPercent = Math.max(0, Number(billInfo.taxPercent || 0));
@@ -1383,8 +1385,29 @@ function SellerBillingPage({ store, commit, session }) {
   };
 
   const printBill = (bill) => {
+    setPrintTargetBill(bill);
     window.document.title = `${bill.billNumber} - Aimies Bill`;
-    window.print();
+    window.setTimeout(() => window.print(), 0);
+  };
+
+  const deleteCustomer = (customerId) => {
+    const confirmed = window.confirm("Delete this customer from the seller customer list?");
+    if (!confirmed) return;
+    commit((current) => ({
+      ...current,
+      sellerCustomers: (current.sellerCustomers || []).filter((item) => item.id !== customerId)
+    }));
+    toast("Customer deleted.");
+  };
+
+  const deleteBill = (billId) => {
+    const confirmed = window.confirm("Delete this bill from history?");
+    if (!confirmed) return;
+    commit((current) => ({
+      ...current,
+      sellerBills: (current.sellerBills || []).filter((bill) => bill.id !== billId)
+    }));
+    toast("Bill deleted.");
   };
 
   return (
@@ -1470,26 +1493,79 @@ function SellerBillingPage({ store, commit, session }) {
         ) : <p className="empty-note">Add oil items to start a bill.</p>}
       </Panel>
 
-      {latestBill ? (
+      {previewBill ? (
         <Panel title="Generated Bill" className="full-row-panel seller-preview-panel">
-          <BillPreview bill={latestBill} />
+          <BillPreview bill={previewBill} />
           <div className="seller-share-actions">
-            <button type="button" className="primary-button" onClick={() => printBill(latestBill)}>Print Bill</button>
-            <button type="button" className="secondary-button" onClick={() => shareByEmail(latestBill)}>Send to Accountant Email</button>
-            <button type="button" className="secondary-button" onClick={() => shareByWhatsApp(latestBill)}>Send to Owner WhatsApp</button>
+            <button type="button" className="primary-button" onClick={() => printBill(previewBill)}>Print Bill</button>
+            <button type="button" className="secondary-button" onClick={() => shareByEmail(previewBill)}>Send to Accountant Email</button>
+            <button type="button" className="secondary-button" onClick={() => shareByWhatsApp(previewBill)}>Send to Owner WhatsApp</button>
           </div>
           <p className="empty-note">Email and WhatsApp open your device apps. Fully automatic sending needs email and WhatsApp API credentials.</p>
         </Panel>
       ) : null}
 
       <Panel title="Customer List" className="full-row-panel">
-        {customers.length ? <DataTable rows={customers} columns={["name", "phone", "address", "gstin", "state", "stateCode", "totalBills", "lastBillAt"]} /> : <p className="empty-note">Customers will appear automatically after bills are generated.</p>}
+        {customers.length ? <SellerCustomerTable customers={customers} onDelete={deleteCustomer} /> : <p className="empty-note">Customers will appear automatically after bills are generated.</p>}
       </Panel>
 
       <Panel title="Bill History" className="full-row-panel">
-        {bills.length ? <DataTable rows={bills.map((bill) => ({ billNumber: bill.billNumber, documentTitle: bill.documentTitle, customerName: bill.customerName, customerPhone: bill.customerPhone, paymentMode: bill.paymentMode, total: bill.total, date: bill.date }))} columns={["billNumber", "documentTitle", "customerName", "customerPhone", "paymentMode", "total", "date"]} /> : <p className="empty-note">No local seller bills generated yet.</p>}
+        {bills.length ? <SellerBillHistoryTable bills={bills} onPrint={printBill} onDelete={deleteBill} /> : <p className="empty-note">No local seller bills generated yet.</p>}
       </Panel>
     </DashboardGrid>
+  );
+}
+
+function SellerCustomerTable({ customers, onDelete }) {
+  return (
+    <div className="data-table seller-customer-table">
+      <div className="data-head">
+        <span>Name</span><span>Phone</span><span>Address</span><span>GSTIN</span><span>State</span><span>Bills</span><span>Last Bill</span><span>Action</span>
+      </div>
+      {customers.map((customer) => (
+        <div className="data-row" key={customer.id}>
+          <span>{customer.name}</span>
+          <span>{customer.phone}</span>
+          <span>{customer.address || "--"}</span>
+          <span>{customer.gstin || "--"}</span>
+          <span>{customer.state}{customer.stateCode ? ` (${customer.stateCode})` : ""}</span>
+          <span>{customer.totalBills || 0}</span>
+          <span>{customer.lastBillAt || "--"}</span>
+          <span className="seller-row-actions">
+            <button type="button" className="icon-action danger" title="Delete customer" aria-label={`Delete ${customer.name}`} onClick={() => onDelete(customer.id)}>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16" /><path d="M9 7V5h6v2" /><path d="M6 7l1 14h10l1-14" /></svg>
+            </button>
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SellerBillHistoryTable({ bills, onPrint, onDelete }) {
+  return (
+    <div className="data-table seller-history-table">
+      <div className="data-head">
+        <span>Bill No</span><span>Document</span><span>Customer</span><span>Phone</span><span>Payment</span><span>Total</span><span>Date</span><span>Action</span>
+      </div>
+      {bills.map((bill) => (
+        <div className="data-row" key={bill.id}>
+          <span>{bill.billNumber}</span>
+          <span>{bill.documentTitle || "--"}</span>
+          <span>{bill.customerName}</span>
+          <span>{bill.customerPhone}</span>
+          <span>{bill.paymentMode || "--"}</span>
+          <span>{money(bill.total)}</span>
+          <span>{bill.date}</span>
+          <span className="seller-row-actions">
+            <button type="button" className="secondary-button compact-action-button" onClick={() => onPrint(bill)}>Print</button>
+            <button type="button" className="icon-action danger" title="Delete bill" aria-label={`Delete ${bill.billNumber}`} onClick={() => onDelete(bill.id)}>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16" /><path d="M9 7V5h6v2" /><path d="M6 7l1 14h10l1-14" /></svg>
+            </button>
+          </span>
+        </div>
+      ))}
+    </div>
   );
 }
 
