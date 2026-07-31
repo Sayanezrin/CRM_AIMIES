@@ -10,6 +10,13 @@ const DEFAULT_ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || "sayanezrin@gmai
 const LOCAL_ADMIN_PASSWORD = import.meta.env.VITE_LOCAL_ADMIN_PASSWORD || "";
 const ACCOUNTANT_EMAIL = import.meta.env.VITE_ACCOUNTANT_EMAIL || "";
 const OWNER_WHATSAPP_NUMBER = import.meta.env.VITE_OWNER_WHATSAPP_NUMBER || "";
+const COMPANY_LEGAL_NAME = import.meta.env.VITE_COMPANY_LEGAL_NAME || "AIMIE FOODS AND OIL EXPORTS";
+const COMPANY_ADDRESS = import.meta.env.VITE_COMPANY_ADDRESS || "8/147, Mannam, Chittattukara, N. Paravoor, PIN - 683520";
+const COMPANY_GSTIN = import.meta.env.VITE_COMPANY_GSTIN || "32AYAPR8158A1ZN";
+const COMPANY_FSSAI = import.meta.env.VITE_COMPANY_FSSAI || "10020041002649";
+const COMPANY_PHONE = import.meta.env.VITE_COMPANY_PHONE || "0484 2940548";
+const COMPANY_MOBILE = import.meta.env.VITE_COMPANY_MOBILE || "7511111178, 9895505488";
+const COMPANY_EMAIL = import.meta.env.VITE_COMPANY_EMAIL || "aimiefoodsandoilexports@gmail.com";
 const ALLOW_LOCAL_FALLBACK_LOGIN = import.meta.env.DEV && import.meta.env.VITE_ALLOW_LOCAL_FALLBACK_LOGIN !== "false";
 const CHECKIN_LOCATION = {
   latitude: Number(import.meta.env.VITE_CHECKIN_LATITUDE || 10.011327),
@@ -1195,10 +1202,13 @@ function normalizePhone(value) {
 
 function sellerBillText(bill) {
   const lines = [
-    "Aimies",
-    "Local Oil Sale Bill",
+    COMPANY_LEGAL_NAME,
+    bill.documentTitle,
     `Bill No: ${bill.billNumber}`,
     `Date: ${bill.date}`,
+    bill.irn ? `IRN: ${bill.irn}` : "IRN: Pending / not entered",
+    bill.ackNo ? `Ack No: ${bill.ackNo}` : "",
+    bill.ackDate ? `Ack Date: ${bill.ackDate}` : "",
     `Buyer: ${bill.customerName}`,
     `Phone: ${bill.customerPhone}`,
     bill.customerAddress ? `Address: ${bill.customerAddress}` : "",
@@ -1226,7 +1236,7 @@ function SellerBillingPage({ store, commit, session }) {
   const customers = store.sellerCustomers || [];
   const bills = store.sellerBills || [];
   const [customer, setCustomer] = useState({ name: "", phone: "", address: "", gstin: "", state: "Kerala" });
-  const [billInfo, setBillInfo] = useState({ paymentMode: "Cash", taxPercent: "0", destination: "", vehicleNumber: "", note: "" });
+  const [billInfo, setBillInfo] = useState({ documentType: "retail", paymentMode: "Cash", taxPercent: "0", destination: "", vehicleNumber: "", irn: "", ackNo: "", ackDate: "", ewayBillNo: "", signedQr: "", note: "" });
   const [line, setLine] = useState({ product: "oil1l", customName: "", quantity: "1", amount: "" });
   const [items, setItems] = useState([]);
   const latestBill = bills[0] || null;
@@ -1277,6 +1287,12 @@ function SellerBillingPage({ store, commit, session }) {
     const customerAddress = customer.address.trim();
     const customerGstin = customer.gstin.trim().toUpperCase();
     const customerState = customer.state.trim() || "Kerala";
+    const isTaxInvoice = billInfo.documentType === "tax";
+    const irn = billInfo.irn.trim();
+    if (isTaxInvoice && (!customerGstin || !irn)) {
+      toast("For a GST tax invoice, enter buyer GSTIN and IRN after e-invoice generation.", "error");
+      return;
+    }
     if (!customerName || !customerPhone) {
       toast("Enter buyer name and phone number.", "error");
       return;
@@ -1290,6 +1306,13 @@ function SellerBillingPage({ store, commit, session }) {
       id: uid("BILL"),
       billNumber: `LS-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${String(bills.length + 1).padStart(3, "0")}`,
       date: new Date().toLocaleString("en-IN"),
+      documentType: billInfo.documentType,
+      documentTitle: isTaxInvoice ? "Tax Invoice" : "Retail Sale Bill",
+      irn,
+      ackNo: billInfo.ackNo.trim(),
+      ackDate: billInfo.ackDate,
+      ewayBillNo: billInfo.ewayBillNo.trim(),
+      signedQr: billInfo.signedQr.trim(),
       customerName,
       customerPhone,
       customerAddress,
@@ -1335,7 +1358,7 @@ function SellerBillingPage({ store, commit, session }) {
     });
     setItems([]);
     setCustomer({ name: "", phone: "", address: "", gstin: "", state: "Kerala" });
-    setBillInfo({ paymentMode: "Cash", taxPercent: "0", destination: "", vehicleNumber: "", note: "" });
+    setBillInfo({ documentType: "retail", paymentMode: "Cash", taxPercent: "0", destination: "", vehicleNumber: "", irn: "", ackNo: "", ackDate: "", ewayBillNo: "", signedQr: "", note: "" });
     toast("Bill generated and customer list updated.");
   };
 
@@ -1360,7 +1383,17 @@ function SellerBillingPage({ store, commit, session }) {
   return (
     <DashboardGrid>
       <Panel title="Generate Local Sale Bill" className="seller-bill-panel">
+        <div className="seller-compliance-note">
+          <strong>GST compliance check</strong>
+          <span>For B2B/export GST tax invoices, generate IRN/QR through the authorised IRP first, then enter IRN/Ack details here. Use Retail Sale Bill only for normal local retail sales where e-invoice is not required.</span>
+        </div>
         <form className="seller-bill-form" onSubmit={generateBill}>
+          <label>Document Type
+            <select value={billInfo.documentType} onChange={(event) => setBillInfo({ ...billInfo, documentType: event.target.value })}>
+              <option value="retail">Retail Sale Bill</option>
+              <option value="tax">GST Tax Invoice with IRN</option>
+            </select>
+          </label>
           <label>Buyer Name<input value={customer.name} onChange={(event) => setCustomer({ ...customer, name: event.target.value })} placeholder="Customer name" /></label>
           <label>Phone Number<input value={customer.phone} onChange={(event) => setCustomer({ ...customer, phone: event.target.value })} placeholder="Customer phone" /></label>
           <label>Address<input value={customer.address} onChange={(event) => setCustomer({ ...customer, address: event.target.value })} placeholder="Buyer address" /></label>
@@ -1378,6 +1411,11 @@ function SellerBillingPage({ store, commit, session }) {
           <label>GST %<input type="number" min="0" step="0.01" value={billInfo.taxPercent} onChange={(event) => setBillInfo({ ...billInfo, taxPercent: event.target.value })} placeholder="0 or 5" /></label>
           <label>Destination<input value={billInfo.destination} onChange={(event) => setBillInfo({ ...billInfo, destination: event.target.value })} placeholder="Delivery destination" /></label>
           <label>Vehicle No.<input value={billInfo.vehicleNumber} onChange={(event) => setBillInfo({ ...billInfo, vehicleNumber: event.target.value })} placeholder="Optional vehicle number" /></label>
+          <label>IRN<input value={billInfo.irn} onChange={(event) => setBillInfo({ ...billInfo, irn: event.target.value })} placeholder="Required for GST tax invoice" /></label>
+          <label>Ack No.<input value={billInfo.ackNo} onChange={(event) => setBillInfo({ ...billInfo, ackNo: event.target.value })} placeholder="E-invoice acknowledgement no." /></label>
+          <label>Ack Date<input type="date" value={billInfo.ackDate} onChange={(event) => setBillInfo({ ...billInfo, ackDate: event.target.value })} /></label>
+          <label>e-Way Bill No.<input value={billInfo.ewayBillNo} onChange={(event) => setBillInfo({ ...billInfo, ewayBillNo: event.target.value })} placeholder="If applicable" /></label>
+          <label className="wide-input">Signed QR Text<input value={billInfo.signedQr} onChange={(event) => setBillInfo({ ...billInfo, signedQr: event.target.value })} placeholder="Paste QR/IRP signed QR text if available" /></label>
           <label>Bill Note<input value={billInfo.note} onChange={(event) => setBillInfo({ ...billInfo, note: event.target.value })} placeholder="Optional note" /></label>
           {customers.length ? (
             <label>Saved Customer
@@ -1441,7 +1479,7 @@ function SellerBillingPage({ store, commit, session }) {
       </Panel>
 
       <Panel title="Bill History" className="full-row-panel">
-        {bills.length ? <DataTable rows={bills.map((bill) => ({ billNumber: bill.billNumber, customerName: bill.customerName, customerPhone: bill.customerPhone, paymentMode: bill.paymentMode, total: bill.total, date: bill.date }))} columns={["billNumber", "customerName", "customerPhone", "paymentMode", "total", "date"]} /> : <p className="empty-note">No local seller bills generated yet.</p>}
+        {bills.length ? <DataTable rows={bills.map((bill) => ({ billNumber: bill.billNumber, documentTitle: bill.documentTitle, customerName: bill.customerName, customerPhone: bill.customerPhone, paymentMode: bill.paymentMode, total: bill.total, date: bill.date }))} columns={["billNumber", "documentTitle", "customerName", "customerPhone", "paymentMode", "total", "date"]} /> : <p className="empty-note">No local seller bills generated yet.</p>}
       </Panel>
     </DashboardGrid>
   );
@@ -1453,13 +1491,21 @@ function BillPreview({ bill }) {
       <header>
         <img src={aimiesLogoImage} alt="Aimies" />
         <div>
-          <strong>Aimies</strong>
-          <span>Local Oil Sale Bill</span>
+          <strong>{COMPANY_LEGAL_NAME}</strong>
+          <span>{bill.documentTitle || "Retail Sale Bill"}</span>
+          <small>{COMPANY_ADDRESS}</small>
+          <small>GSTIN: {COMPANY_GSTIN} | FSSAI: {COMPANY_FSSAI}</small>
+          <small>Phone: {COMPANY_PHONE} | Mob: {COMPANY_MOBILE}</small>
+          <small>Email: {COMPANY_EMAIL}</small>
         </div>
       </header>
       <div className="seller-bill-meta">
         <span><b>Bill No</b>{bill.billNumber}</span>
         <span><b>Date</b>{bill.date}</span>
+        {bill.irn ? <span><b>IRN</b>{bill.irn}</span> : <span><b>Invoice Status</b>{bill.documentType === "tax" ? "IRN required" : "Retail bill"}</span>}
+        {bill.ackNo ? <span><b>Ack No.</b>{bill.ackNo}</span> : null}
+        {bill.ackDate ? <span><b>Ack Date</b>{bill.ackDate}</span> : null}
+        {bill.ewayBillNo ? <span><b>e-Way Bill No.</b>{bill.ewayBillNo}</span> : null}
         <span><b>Payment</b>{bill.paymentMode}</span>
         <span><b>Place of Supply</b>{bill.placeOfSupply}</span>
         <span><b>Buyer</b>{bill.customerName}</span>
@@ -1487,6 +1533,7 @@ function BillPreview({ bill }) {
         <span><b>CGST</b>{money(bill.cgst || 0)}</span>
         <span><b>SGST</b>{money(bill.sgst || 0)}</span>
       </div>
+      {bill.signedQr ? <p className="seller-qr-text"><b>Signed QR:</b> {bill.signedQr}</p> : null}
       <footer>
         <span>Seller: {bill.sellerName}</span>
         <strong>Total: {money(bill.total)}</strong>

@@ -1011,6 +1011,21 @@ button:disabled {
   min-height: 42px;
 }
 
+.seller-compliance-note {
+  display: grid;
+  gap: 4px;
+  border: 1px solid #f0cf8a;
+  border-radius: 7px;
+  background: #fff8e8;
+  color: #5f3b00;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.seller-compliance-note strong {
+  color: #7a4a00;
+}
+
 .seller-item-table .data-head,
 .seller-item-table .data-row {
   grid-template-columns: minmax(260px, 1fr) 150px 150px 90px;
@@ -1066,6 +1081,11 @@ button:disabled {
   display: grid;
   gap: 3px;
   text-align: right;
+}
+
+.seller-bill-preview header small {
+  color: #344154;
+  font-size: 12px;
 }
 
 .seller-bill-preview header strong {
@@ -1140,6 +1160,16 @@ button:disabled {
   color: var(--muted);
   font-size: 12px;
   text-transform: uppercase;
+}
+
+.seller-qr-text {
+  margin: 0;
+  border: 1px dashed #c5d4e5;
+  border-radius: 7px;
+  padding: 10px;
+  color: #344154;
+  overflow-wrap: anywhere;
+  font-size: 12px;
 }
 
 .stock-movement-table .data-row span:last-child {
