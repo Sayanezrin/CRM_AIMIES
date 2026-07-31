@@ -274,13 +274,13 @@ const stockProducts = [
   { id: "p15kg", name: "15 kg Can", piecesPerCase: 1, drawPerPiece: { oil: 16.3, can15kg: 1, sticker15kg: 1, canCap: 1, band: 1 }, drawPerCase: { plastic: 1, box15kg: 1 } }
 ];
 const sellerOilItems = [
-  { id: "oil500", name: "0.5 Liter Oil", unit: "piece" },
-  { id: "oil1l", name: "1 Liter Oil", unit: "piece" },
-  { id: "oil2l", name: "2 Liter Oil", unit: "piece" },
-  { id: "box12", name: "Box Oil - 12 Pieces", unit: "box" },
-  { id: "box16", name: "Box Oil - 16 Pieces", unit: "box" },
-  { id: "box24", name: "Box Oil - 24 Pieces", unit: "box" },
-  { id: "custom", name: "Custom Oil Item", unit: "item" }
+  { id: "oil500", name: "Aimies Coconut Oil 1/2 Ltr Bottle", unit: "piece", hsn: "15131900" },
+  { id: "oil1l", name: "Aimies Coconut Oil 1 Ltr Bottle", unit: "piece", hsn: "15131900" },
+  { id: "oil2l", name: "Aimies Coconut Oil 2 Ltr Bottle", unit: "piece", hsn: "15131900" },
+  { id: "box12", name: "Aimies Coconut Oil Box - 12 Pieces", unit: "box", hsn: "15131900" },
+  { id: "box16", name: "Aimies Coconut Oil Box - 16 Pieces", unit: "box", hsn: "15131900" },
+  { id: "box24", name: "Aimies Coconut Oil Box - 24 Pieces", unit: "box", hsn: "15131900" },
+  { id: "custom", name: "Custom Oil Item", unit: "item", hsn: "15131900" }
 ];
 const initialStockLevels = Object.fromEntries(stockMaterials.map((material) => [material.id, 0]));
 
@@ -1201,31 +1201,44 @@ function sellerBillText(bill) {
     `Date: ${bill.date}`,
     `Buyer: ${bill.customerName}`,
     `Phone: ${bill.customerPhone}`,
+    bill.customerAddress ? `Address: ${bill.customerAddress}` : "",
+    bill.customerGstin ? `GSTIN: ${bill.customerGstin}` : "",
+    bill.placeOfSupply ? `Place of Supply: ${bill.placeOfSupply}` : "",
+    `Payment: ${bill.paymentMode}`,
+    bill.destination ? `Destination: ${bill.destination}` : "",
+    bill.vehicleNumber ? `Vehicle No: ${bill.vehicleNumber}` : "",
+    bill.note ? `Note: ${bill.note}` : "",
     "",
     "Items:",
-    ...bill.items.map((item, index) => `${index + 1}. ${item.name} - ${stockAmount(item.quantity)} ${item.unit} - ${money(item.amount)}`),
+    ...bill.items.map((item, index) => `${index + 1}. ${item.name} - HSN ${item.hsn} - ${stockAmount(item.quantity)} ${item.unit} - ${money(item.amount)}`),
     "",
+    `Subtotal: ${money(bill.subtotal)}`,
+    bill.taxPercent ? `CGST: ${money(bill.cgst)} | SGST: ${money(bill.sgst)}` : "",
     `Total: ${money(bill.total)}`,
     `Seller: ${bill.sellerName}`,
     "",
     "Thank you for buying from Aimies."
   ];
-  return lines.join("\n");
+  return lines.filter(Boolean).join("\n");
 }
 
 function SellerBillingPage({ store, commit, session }) {
   const customers = store.sellerCustomers || [];
   const bills = store.sellerBills || [];
-  const [customer, setCustomer] = useState({ name: "", phone: "" });
+  const [customer, setCustomer] = useState({ name: "", phone: "", address: "", gstin: "", state: "Kerala" });
+  const [billInfo, setBillInfo] = useState({ paymentMode: "Cash", taxPercent: "0", destination: "", vehicleNumber: "", note: "" });
   const [line, setLine] = useState({ product: "oil1l", customName: "", quantity: "1", amount: "" });
   const [items, setItems] = useState([]);
   const latestBill = bills[0] || null;
   const selectedItem = sellerOilItems.find((item) => item.id === line.product) || sellerOilItems[0];
-  const billTotal = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const billSubtotal = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const taxPercent = Math.max(0, Number(billInfo.taxPercent || 0));
+  const taxAmount = billSubtotal * taxPercent / 100;
+  const billTotal = billSubtotal + taxAmount;
 
   const selectCustomer = (phone) => {
     const savedCustomer = customers.find((item) => item.phone === phone);
-    if (savedCustomer) setCustomer({ name: savedCustomer.name, phone: savedCustomer.phone });
+    if (savedCustomer) setCustomer({ name: savedCustomer.name, phone: savedCustomer.phone, address: savedCustomer.address || "", gstin: savedCustomer.gstin || "", state: savedCustomer.state || "Kerala" });
   };
 
   const addItem = (event) => {
@@ -1243,8 +1256,10 @@ function SellerBillingPage({ store, commit, session }) {
         id: uid("ITEM"),
         productId: line.product,
         name,
+        hsn: selectedItem.hsn,
         quantity,
         unit: selectedItem.unit,
+        rate: amount / quantity,
         amount
       }
     ]);
@@ -1259,6 +1274,9 @@ function SellerBillingPage({ store, commit, session }) {
     event.preventDefault();
     const customerName = customer.name.trim();
     const customerPhone = normalizePhone(customer.phone);
+    const customerAddress = customer.address.trim();
+    const customerGstin = customer.gstin.trim().toUpperCase();
+    const customerState = customer.state.trim() || "Kerala";
     if (!customerName || !customerPhone) {
       toast("Enter buyer name and phone number.", "error");
       return;
@@ -1274,6 +1292,18 @@ function SellerBillingPage({ store, commit, session }) {
       date: new Date().toLocaleString("en-IN"),
       customerName,
       customerPhone,
+      customerAddress,
+      customerGstin,
+      customerState,
+      placeOfSupply: customerState,
+      paymentMode: billInfo.paymentMode,
+      taxPercent,
+      cgst: taxAmount / 2,
+      sgst: taxAmount / 2,
+      subtotal: billSubtotal,
+      destination: billInfo.destination.trim(),
+      vehicleNumber: billInfo.vehicleNumber.trim().toUpperCase(),
+      note: billInfo.note.trim(),
       items,
       total: billTotal,
       sellerName: session.name,
@@ -1287,6 +1317,9 @@ function SellerBillingPage({ store, commit, session }) {
         id: currentCustomers.find((item) => item.phone === customerPhone)?.id || uid("CUST"),
         name: customerName,
         phone: customerPhone,
+        address: customerAddress,
+        gstin: customerGstin,
+        state: customerState,
         lastBillAt: bill.createdAt,
         totalBills: currentCustomers.find((item) => item.phone === customerPhone)?.totalBills || 0
       };
@@ -1301,7 +1334,8 @@ function SellerBillingPage({ store, commit, session }) {
       };
     });
     setItems([]);
-    setCustomer({ name: "", phone: "" });
+    setCustomer({ name: "", phone: "", address: "", gstin: "", state: "Kerala" });
+    setBillInfo({ paymentMode: "Cash", taxPercent: "0", destination: "", vehicleNumber: "", note: "" });
     toast("Bill generated and customer list updated.");
   };
 
@@ -1329,6 +1363,22 @@ function SellerBillingPage({ store, commit, session }) {
         <form className="seller-bill-form" onSubmit={generateBill}>
           <label>Buyer Name<input value={customer.name} onChange={(event) => setCustomer({ ...customer, name: event.target.value })} placeholder="Customer name" /></label>
           <label>Phone Number<input value={customer.phone} onChange={(event) => setCustomer({ ...customer, phone: event.target.value })} placeholder="Customer phone" /></label>
+          <label>Address<input value={customer.address} onChange={(event) => setCustomer({ ...customer, address: event.target.value })} placeholder="Buyer address" /></label>
+          <label>GSTIN Optional<input value={customer.gstin} onChange={(event) => setCustomer({ ...customer, gstin: event.target.value })} placeholder="GST number if available" /></label>
+          <label>State / Place of Supply<input value={customer.state} onChange={(event) => setCustomer({ ...customer, state: event.target.value })} placeholder="Kerala" /></label>
+          <label>Payment Mode
+            <select value={billInfo.paymentMode} onChange={(event) => setBillInfo({ ...billInfo, paymentMode: event.target.value })}>
+              <option value="Cash">Cash</option>
+              <option value="UPI">UPI</option>
+              <option value="Card">Card</option>
+              <option value="Credit">Credit</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+            </select>
+          </label>
+          <label>GST %<input type="number" min="0" step="0.01" value={billInfo.taxPercent} onChange={(event) => setBillInfo({ ...billInfo, taxPercent: event.target.value })} placeholder="0 or 5" /></label>
+          <label>Destination<input value={billInfo.destination} onChange={(event) => setBillInfo({ ...billInfo, destination: event.target.value })} placeholder="Delivery destination" /></label>
+          <label>Vehicle No.<input value={billInfo.vehicleNumber} onChange={(event) => setBillInfo({ ...billInfo, vehicleNumber: event.target.value })} placeholder="Optional vehicle number" /></label>
+          <label>Bill Note<input value={billInfo.note} onChange={(event) => setBillInfo({ ...billInfo, note: event.target.value })} placeholder="Optional note" /></label>
           {customers.length ? (
             <label>Saved Customer
               <select value="" onChange={(event) => selectCustomer(event.target.value)}>
@@ -1387,11 +1437,11 @@ function SellerBillingPage({ store, commit, session }) {
       ) : null}
 
       <Panel title="Customer List" className="full-row-panel">
-        {customers.length ? <DataTable rows={customers} columns={["name", "phone", "totalBills", "lastBillAt"]} /> : <p className="empty-note">Customers will appear automatically after bills are generated.</p>}
+        {customers.length ? <DataTable rows={customers} columns={["name", "phone", "address", "gstin", "state", "totalBills", "lastBillAt"]} /> : <p className="empty-note">Customers will appear automatically after bills are generated.</p>}
       </Panel>
 
       <Panel title="Bill History" className="full-row-panel">
-        {bills.length ? <DataTable rows={bills.map((bill) => ({ billNumber: bill.billNumber, customerName: bill.customerName, customerPhone: bill.customerPhone, total: bill.total, date: bill.date }))} columns={["billNumber", "customerName", "customerPhone", "total", "date"]} /> : <p className="empty-note">No local seller bills generated yet.</p>}
+        {bills.length ? <DataTable rows={bills.map((bill) => ({ billNumber: bill.billNumber, customerName: bill.customerName, customerPhone: bill.customerPhone, paymentMode: bill.paymentMode, total: bill.total, date: bill.date }))} columns={["billNumber", "customerName", "customerPhone", "paymentMode", "total", "date"]} /> : <p className="empty-note">No local seller bills generated yet.</p>}
       </Panel>
     </DashboardGrid>
   );
@@ -1401,24 +1451,41 @@ function BillPreview({ bill }) {
   return (
     <article className="seller-bill-preview">
       <header>
-        <strong>Aimies</strong>
-        <span>Local Oil Sale Bill</span>
+        <img src={aimiesLogoImage} alt="Aimies" />
+        <div>
+          <strong>Aimies</strong>
+          <span>Local Oil Sale Bill</span>
+        </div>
       </header>
       <div className="seller-bill-meta">
         <span><b>Bill No</b>{bill.billNumber}</span>
         <span><b>Date</b>{bill.date}</span>
+        <span><b>Payment</b>{bill.paymentMode}</span>
+        <span><b>Place of Supply</b>{bill.placeOfSupply}</span>
         <span><b>Buyer</b>{bill.customerName}</span>
         <span><b>Phone</b>{bill.customerPhone}</span>
+        {bill.customerAddress ? <span><b>Address</b>{bill.customerAddress}</span> : null}
+        {bill.customerGstin ? <span><b>GSTIN</b>{bill.customerGstin}</span> : null}
+        {bill.destination ? <span><b>Destination</b>{bill.destination}</span> : null}
+        {bill.vehicleNumber ? <span><b>Vehicle No.</b>{bill.vehicleNumber}</span> : null}
+        {bill.note ? <span><b>Note</b>{bill.note}</span> : null}
       </div>
       <div className="data-table seller-item-table">
-        <div className="data-head"><span>Item</span><span>Qty</span><span>Amount</span></div>
+        <div className="data-head"><span>Item</span><span>HSN</span><span>Qty</span><span>Rate</span><span>Amount</span></div>
         {bill.items.map((item) => (
           <div className="data-row" key={item.id}>
             <span>{item.name}</span>
+            <span>{item.hsn}</span>
             <span>{stockAmount(item.quantity)} {item.unit}</span>
+            <span>{money(item.rate)}</span>
             <span>{money(item.amount)}</span>
           </div>
         ))}
+      </div>
+      <div className="seller-tax-summary">
+        <span><b>Subtotal</b>{money(bill.subtotal || bill.total)}</span>
+        <span><b>CGST</b>{money(bill.cgst || 0)}</span>
+        <span><b>SGST</b>{money(bill.sgst || 0)}</span>
       </div>
       <footer>
         <span>Seller: {bill.sellerName}</span>

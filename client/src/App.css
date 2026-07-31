@@ -1019,8 +1019,8 @@ button:disabled {
 
 .seller-bill-preview .seller-item-table .data-head,
 .seller-bill-preview .seller-item-table .data-row {
-  grid-template-columns: minmax(260px, 1fr) 150px 150px;
-  min-width: 560px;
+  grid-template-columns: minmax(260px, 1fr) 100px 130px 130px 150px;
+  min-width: 760px;
 }
 
 .seller-total {
@@ -1054,6 +1054,18 @@ button:disabled {
   border-radius: 7px;
   background: #effaf1;
   padding: 12px 14px;
+}
+
+.seller-bill-preview header img {
+  width: 118px;
+  height: 68px;
+  object-fit: contain;
+}
+
+.seller-bill-preview header div {
+  display: grid;
+  gap: 3px;
+  text-align: right;
 }
 
 .seller-bill-preview header strong {
@@ -1101,6 +1113,33 @@ button:disabled {
 
 .seller-share-actions button {
   min-width: 180px;
+}
+
+.seller-tax-summary {
+  justify-self: end;
+  min-width: min(100%, 520px);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.seller-tax-summary span {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border-right: 1px solid var(--line);
+}
+
+.seller-tax-summary span:last-child {
+  border-right: 0;
+}
+
+.seller-tax-summary b {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
 }
 
 .stock-movement-table .data-row span:last-child {
@@ -1351,12 +1390,41 @@ button:disabled {
 }
 
 @media print {
-  body {
-    background: #fff;
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
   }
 
-  body * {
-    visibility: hidden;
+  html,
+  body {
+    background: #fff;
+    width: 210mm;
+    min-height: 0;
+  }
+
+  .sidebar,
+  .page-header,
+  .install-app-notice,
+  .toast-stack,
+  .seller-share-actions,
+  .seller-preview-panel > h2,
+  .seller-preview-panel > .empty-note,
+  .dashboard-grid > .panel:not(.seller-preview-panel) {
+    display: none !important;
+  }
+
+  .portal-shell,
+  .portal-main,
+  .dashboard-grid,
+  .seller-preview-panel {
+    display: block !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    background: #fff !important;
   }
 
   .seller-bill-preview,
@@ -1365,15 +1433,16 @@ button:disabled {
   }
 
   .seller-bill-preview {
-    position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
     border: 0;
     border-radius: 0;
     box-shadow: none;
     padding: 0;
     color: #172033;
+    gap: 6px;
+    font-size: 10.5px;
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 
   .seller-bill-preview header,
@@ -1381,10 +1450,27 @@ button:disabled {
     border: 2px solid #007140;
     background: #fff;
     color: #172033;
+    padding: 6px 8px;
+  }
+
+  .seller-bill-preview header img {
+    width: 88px;
+    height: 48px;
   }
 
   .seller-bill-preview header strong {
-    font-size: 34px;
+    font-size: 22px;
+  }
+
+  .seller-bill-meta {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .seller-bill-meta span {
+    min-height: 0;
+    padding: 5px;
+    border-radius: 0;
   }
 
   .seller-bill-preview .data-table {
@@ -1395,12 +1481,20 @@ button:disabled {
   .seller-bill-preview .seller-item-table .data-head,
   .seller-bill-preview .seller-item-table .data-row {
     min-width: 0;
-    grid-template-columns: minmax(260px, 1fr) 120px 140px;
+    grid-template-columns: minmax(230px, 1fr) 78px 100px 100px 120px;
   }
 
-  .seller-share-actions,
-  .install-app-notice,
-  .toast-stack {
-    display: none !important;
+  .seller-bill-preview .data-head span,
+  .seller-bill-preview .data-row span {
+    min-height: 28px;
+    padding: 5px;
+  }
+
+  .seller-tax-summary {
+    min-width: 360px;
+  }
+
+  .seller-tax-summary span {
+    padding: 5px;
   }
 }
