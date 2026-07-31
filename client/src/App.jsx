@@ -18,7 +18,8 @@ const CHECKIN_LOCATION = {
 const roles = {
   admin: { title: "Admin", email: DEFAULT_ADMIN_EMAIL, password: LOCAL_ADMIN_PASSWORD },
   hr: { title: "HR / Accountant", email: "hr@aimies.local" },
-  employee: { title: "Employee", email: "employee@aimies.local" }
+  employee: { title: "Employee", email: "employee@aimies.local" },
+  localSeller: { title: "Local Seller", email: "seller@aimies.local" }
 };
 
 const seedState = {
@@ -120,7 +121,10 @@ function writeLocalPasswords(value) {
 }
 
 function normalizeRole(role) {
-  return role?.trim().toLowerCase() === "hr / accountant" ? "hr" : role?.trim().toLowerCase() || "employee";
+  const value = role?.trim().toLowerCase() || "employee";
+  if (value === "hr / accountant" || value === "accountant") return "hr";
+  if (value === "local seller" || value === "local-seller" || value === "localseller" || value === "seller") return "localSeller";
+  return value;
 }
 
 function getFirstName(name, email = "") {
@@ -150,6 +154,7 @@ function getLocalPasswordLogin({ email, password, selectedRole, store }) {
   const registeredUser = [
     { email: roles.hr.email, name: roles.hr.title, accessRole: "hr" },
     { email: roles.employee.email, name: roles.employee.title, accessRole: "employee" },
+    { email: roles.localSeller.email, name: roles.localSeller.title, accessRole: "localSeller" },
     ...(store.logins || []),
     ...(store.employees || [])
   ].find((user) => user.email?.trim().toLowerCase() === normalizedEmail && normalizeRole(user.accessRole) === normalizedRole);
@@ -948,7 +953,7 @@ function LoginScreen({ store, onLogin }) {
       <section className="login-copy">
         <img src={aimiesLogoImage} alt="Aimies" />
         <h1>Work smarter. Track better. Approve faster.</h1>
-        <p>Choose one of the three logins to manage employee records, finance entries, approvals, attendance, leave, and reimbursements.</p>
+        <p>Choose your login to manage employee records, finance entries, approvals, attendance, leave, reimbursements, and seller work.</p>
       </section>
       <form className="login-panel" onSubmit={submit} autoComplete="on">
         <h2>Sign in</h2>
@@ -1073,12 +1078,12 @@ function PasswordChangeScreen({ session, onChanged, onLogout }) {
 const navItems = [
   { id: "home", label: "Home" },
   { id: "logins", label: "Add Login", roles: ["admin"] },
-  { id: "employees", label: "Employees" },
+  { id: "employees", label: "Employees", roles: ["admin", "hr", "employee", "localSeller"] },
   { id: "finance", label: "Finance", roles: ["admin", "hr"] },
   { id: "stock", label: "Stock", roles: ["admin", "hr"] },
-  { id: "leave", label: "Leave" },
-  { id: "expenses", label: "Expenses" },
-  { id: "attendance", label: "Attendance" }
+  { id: "leave", label: "Leave", roles: ["admin", "hr", "employee"] },
+  { id: "expenses", label: "Expenses", roles: ["admin", "hr", "employee", "localSeller"] },
+  { id: "attendance", label: "Attendance", roles: ["admin", "hr", "employee", "localSeller"] }
 ];
 
 function getNavItemsForRole(role) {
@@ -1126,7 +1131,7 @@ function Header({ session, store, activePage, apiStatus }) {
         <h1>{session.name} - {pageTitle}</h1>
         <span className={`api-status ${apiStatus}`}>{statusLabel}</span>
       </div>
-      {session.role !== "employee" && (
+      {session.role !== "employee" && session.role !== "localSeller" && (
         <div className="header-metrics">
           <Metric label="Employees" value={store.employees.length} />
           <Metric label="Pending Approvals" value={pendingApprovals} />
@@ -1140,6 +1145,7 @@ function Header({ session, store, activePage, apiStatus }) {
 function RolePage({ session, activePage, store, commit, commitAttendance, deleteAttendance }) {
   if (session.role === "admin") return <AdminPage activePage={activePage} store={store} commit={commit} commitAttendance={commitAttendance} deleteAttendance={deleteAttendance} session={session} />;
   if (session.role === "hr") return <HrPage activePage={activePage} store={store} commit={commit} commitAttendance={commitAttendance} deleteAttendance={deleteAttendance} session={session} />;
+  if (session.role === "localSeller") return <LocalSellerPage activePage={activePage} store={store} commit={commit} commitAttendance={commitAttendance} session={session} />;
   return <EmployeePage activePage={activePage} store={store} commit={commit} commitAttendance={commitAttendance} session={session} />;
 }
 
@@ -1162,6 +1168,13 @@ function HrPage({ activePage, store, commit, commitAttendance, deleteAttendance,
   if (activePage === "finance") return <DashboardGrid><AdminExpenseFormPanel store={store} commit={commit} createdBy="HR" title="Add Debit Expense" /><FinancePanel store={store} canExport className="full-row-panel" /></DashboardGrid>;
   if (activePage === "stock") return <StockPage store={store} commit={commit} />;
   return <DashboardGrid><FinancePanel store={store} canExport className="full-row-panel" /><ApprovalPanel title="Expense Approval Queue" items={store.expenses} kind="expenses" commit={commit} className="full-row-panel" /></DashboardGrid>;
+}
+
+function LocalSellerPage({ activePage, store, commit, commitAttendance, session }) {
+  if (activePage === "employees") return <EmployeePage activePage="employees" store={store} commit={commit} commitAttendance={commitAttendance} session={session} />;
+  if (activePage === "expenses") return <EmployeePage activePage="expenses" store={store} commit={commit} commitAttendance={commitAttendance} session={session} />;
+  if (activePage === "attendance") return <EmployeePage activePage="attendance" store={store} commit={commit} commitAttendance={commitAttendance} session={session} />;
+  return <EmployeePage activePage="home" store={store} commit={commit} commitAttendance={commitAttendance} session={session} />;
 }
 
 function StockPage({ store, commit }) {
@@ -1599,6 +1612,7 @@ function AddLoginPanel({ commit }) {
           <option value="admin">Admin dashboard</option>
           <option value="hr">HR / Accountant dashboard</option>
           <option value="employee">Employee dashboard</option>
+          <option value="localSeller">Local Seller dashboard</option>
         </select>
         <button className="primary-button">Add Login</button>
       </form>
@@ -1723,7 +1737,7 @@ function LoginEditModal({ login, onClose, onSave }) {
         <form className="form-grid employee-edit-form" onSubmit={submitEdit}>
           <label>Name<input value={form.name} onChange={(event) => updateField("name", event.target.value)} /></label>
           <label>Email<input type="email" value={form.email} onChange={(event) => updateField("email", event.target.value)} /></label>
-          <label>Dashboard Access<select value={form.accessRole} onChange={(event) => updateField("accessRole", event.target.value)}><option value="employee">Employee</option><option value="hr">HR / Accountant</option><option value="admin">Admin</option></select></label>
+          <label>Dashboard Access<select value={form.accessRole} onChange={(event) => updateField("accessRole", event.target.value)}><option value="employee">Employee</option><option value="localSeller">Local Seller</option><option value="hr">HR / Accountant</option><option value="admin">Admin</option></select></label>
           <label>Status<select value={form.status} onChange={(event) => updateField("status", event.target.value)}><option value="Active">Active</option><option value="Inactive">Inactive</option></select></label>
           <div className="modal-form-actions">
             <button type="button" className="secondary-button" onClick={onClose}>Cancel</button>
@@ -1831,6 +1845,7 @@ function AddEmployeePanel({ commit }) {
           <option value="admin">Admin dashboard</option>
           <option value="hr">HR / Accountant dashboard</option>
           <option value="employee">Employee dashboard</option>
+          <option value="localSeller">Local Seller dashboard</option>
         </select>
         <input placeholder="Department" value={employee.department} onChange={(event) => setEmployee({ ...employee, department: event.target.value })} />
         <input placeholder="Role" value={employee.role} onChange={(event) => setEmployee({ ...employee, role: event.target.value })} />
@@ -2487,7 +2502,7 @@ function EmployeeEditModal({ employee, onClose, onSave }) {
           <label>Employee ID<input value={form.id} onChange={(event) => updateField("id", event.target.value)} /></label>
           <label>Name<input value={form.name} onChange={(event) => updateField("name", event.target.value)} /></label>
           <label>Email<input type="email" value={form.email} onChange={(event) => updateField("email", event.target.value)} /></label>
-          <label>Dashboard Access<select value={form.accessRole} onChange={(event) => updateField("accessRole", event.target.value)}><option value="employee">Employee</option><option value="hr">HR / Accountant</option><option value="admin">Admin</option></select></label>
+          <label>Dashboard Access<select value={form.accessRole} onChange={(event) => updateField("accessRole", event.target.value)}><option value="employee">Employee</option><option value="localSeller">Local Seller</option><option value="hr">HR / Accountant</option><option value="admin">Admin</option></select></label>
           <label>Department<input value={form.department} onChange={(event) => updateField("department", event.target.value)} /></label>
           <label>Role<input value={form.role} onChange={(event) => updateField("role", event.target.value)} /></label>
           <label>Salary<input type="number" min="0" value={form.salary} onChange={(event) => updateField("salary", event.target.value)} /></label>

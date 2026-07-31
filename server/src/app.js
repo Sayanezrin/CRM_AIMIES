@@ -20,7 +20,8 @@ const adminPassword = process.env.ADMIN_PASSWORD || "";
 const roles = {
   admin: { title: "Admin", email: adminEmail, password: adminPassword },
   hr: { title: "HR / Accountant", email: "hr@aimies.local" },
-  employee: { title: "Employee", email: "employee@aimies.local" }
+  employee: { title: "Employee", email: "employee@aimies.local" },
+  localSeller: { title: "Local Seller", email: "seller@aimies.local" }
 };
 const sessionDurationSeconds = 30 * 24 * 60 * 60;
 
@@ -76,6 +77,7 @@ const googleClient = new OAuth2Client(googleClientId || undefined);
 function normalizeRole(role) {
   const value = String(role || "").trim().toLowerCase();
   if (value === "accountant" || value === "hr / accountant") return "hr";
+  if (value === "local seller" || value === "local-seller" || value === "localseller" || value === "seller") return "localSeller";
   if (value === "admin" || value === "hr") return value;
   return "employee";
 }
@@ -173,7 +175,7 @@ function validateBearerToken(header) {
 function isAllowed(session, pathValue, method) {
   if (session.role === "admin") return true;
   if (session.role === "hr") return !pathValue.startsWith("/api/candidates") || method !== "DELETE";
-  if (session.role === "employee") {
+  if (session.role === "employee" || session.role === "localSeller") {
     return pathValue.startsWith("/api/portal")
       || pathValue.startsWith("/api/attendance")
       || pathValue.startsWith("/api/tasks");
