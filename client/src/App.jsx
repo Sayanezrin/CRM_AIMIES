@@ -39,7 +39,8 @@ const seedState = {
   leaves: [],
   attendance: [],
   sellerCustomers: [],
-  sellerBills: []
+  sellerBills: [],
+  sellerPerformaBills: []
 };
 
 function today() {
@@ -229,6 +230,31 @@ function findChangedAttendanceRecord(previousAttendance = [], nextAttendance = [
 
 function money(value) {
   return `Rs. ${Number(value || 0).toLocaleString("en-IN")}`;
+}
+
+function amountInWords(value) {
+  const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+  const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+  const belowHundred = (number) => number < 20 ? ones[number] : `${tens[Math.floor(number / 10)]}${number % 10 ? ` ${ones[number % 10]}` : ""}`;
+  const belowThousand = (number) => {
+    const hundred = Math.floor(number / 100);
+    const rest = number % 100;
+    return `${hundred ? `${ones[hundred]} Hundred` : ""}${hundred && rest ? " " : ""}${rest ? belowHundred(rest) : ""}`.trim();
+  };
+  let number = Math.round(Number(value || 0));
+  if (!number) return "INR Zero Only";
+  const parts = [];
+  const crore = Math.floor(number / 10000000);
+  if (crore) parts.push(`${belowThousand(crore)} Crore`);
+  number %= 10000000;
+  const lakh = Math.floor(number / 100000);
+  if (lakh) parts.push(`${belowThousand(lakh)} Lakh`);
+  number %= 100000;
+  const thousand = Math.floor(number / 1000);
+  if (thousand) parts.push(`${belowThousand(thousand)} Thousand`);
+  number %= 1000;
+  if (number) parts.push(belowThousand(number));
+  return `INR ${parts.join(" ")} Only`;
 }
 
 const financePrimaryColumns = [
@@ -1099,7 +1125,8 @@ const navItems = [
   { id: "home", label: "Home" },
   { id: "logins", label: "Add Login", roles: ["admin"] },
   { id: "employees", label: "Employees", roles: ["admin", "hr", "employee"] },
-  { id: "sales", label: "Billing", roles: ["localSeller"] },
+  { id: "sales", label: "Billing", roles: ["admin", "localSeller"] },
+  { id: "performa", label: "Performa Bill", roles: ["admin", "localSeller"] },
   { id: "finance", label: "Finance", roles: ["admin", "hr"] },
   { id: "stock", label: "Stock", roles: ["admin", "hr"] },
   { id: "leave", label: "Leave", roles: ["admin", "hr", "employee"] },
@@ -1173,6 +1200,8 @@ function RolePage({ session, activePage, store, commit, commitAttendance, delete
 function AdminPage({ activePage, store, commit, commitAttendance, deleteAttendance, session }) {
   if (activePage === "logins") return <DashboardGrid><AddLoginPanel commit={commit} /><LoginAccessTable logins={store.logins || []} commit={commit} className="full-row-panel" /></DashboardGrid>;
   if (activePage === "employees") return <DashboardGrid><AddEmployeePanel commit={commit} /><EmployeeTable employees={store.employees} commit={commit} canDelete className="full-row-panel" /></DashboardGrid>;
+  if (activePage === "sales") return <SellerBillingPage store={store} commit={commit} session={session} />;
+  if (activePage === "performa") return <SellerPerformaBillPage store={store} commit={commit} session={session} />;
   if (activePage === "finance") return <DashboardGrid><AdminExpenseFormPanel store={store} commit={commit} createdBy="Admin" title="Add Debit Expense" /><FinancePanel store={store} commit={commit} canManage canExport className="full-row-panel" /></DashboardGrid>;
   if (activePage === "stock") return <StockPage store={store} commit={commit} />;
   if (activePage === "leave") return <DashboardGrid><ApprovalPanel title="Leave Applications" items={store.leaves} kind="leaves" commit={commit} /><LeaveTable leaves={store.leaves} /></DashboardGrid>;
@@ -1193,6 +1222,7 @@ function HrPage({ activePage, store, commit, commitAttendance, deleteAttendance,
 
 function LocalSellerPage({ activePage, store, commit, commitAttendance, session }) {
   if (activePage === "attendance") return <EmployeePage activePage="attendance" store={store} commit={commit} commitAttendance={commitAttendance} session={session} />;
+  if (activePage === "performa") return <SellerPerformaBillPage store={store} commit={commit} session={session} />;
   return <SellerBillingPage store={store} commit={commit} session={session} />;
 }
 
@@ -1566,6 +1596,235 @@ function SellerBillHistoryTable({ bills, onPrint, onDelete }) {
         </div>
       ))}
     </div>
+  );
+}
+
+function SellerPerformaBillPage({ store, commit, session }) {
+  const bills = store.sellerPerformaBills || [];
+  const [buyer, setBuyer] = useState({ name: "", address1: "", address2: "", phone: "", state: "Kerala", stateCode: "32" });
+  const [line, setLine] = useState({ product: "oil1l", customName: "", quantity: "1", unit: "BOX", rateInclTax: "", taxableRate: "" });
+  const [items, setItems] = useState([]);
+  const [printTargetBill, setPrintTargetBill] = useState(null);
+  const selectedItem = sellerOilItems.find((item) => item.id === line.product) || sellerOilItems[0];
+  const latestBill = bills[0] || null;
+  const previewBill = printTargetBill || latestBill;
+  const subtotal = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const cgst = subtotal * 0.025;
+  const sgst = subtotal * 0.025;
+  const roundedTotal = Math.round(subtotal + cgst + sgst);
+  const roundOff = roundedTotal - (subtotal + cgst + sgst);
+
+  const addItem = (event) => {
+    event.preventDefault();
+    const quantity = Number(line.quantity);
+    const rateInclTax = Number(line.rateInclTax);
+    const taxableRate = Number(line.taxableRate || (rateInclTax ? rateInclTax / 1.05 : 0));
+    const name = line.product === "custom" ? line.customName.trim() : selectedItem.name;
+    if (!name || !quantity || quantity <= 0 || !rateInclTax || rateInclTax <= 0) {
+      toast("Enter item, quantity, and rate.", "error");
+      return;
+    }
+    setItems((current) => [
+      ...current,
+      { id: uid("PFITEM"), name, hsn: selectedItem.hsn, quantity, unit: line.unit || selectedItem.unit.toUpperCase(), rateInclTax, taxableRate, amount: quantity * taxableRate }
+    ]);
+    setLine({ product: line.product, customName: "", quantity: "1", unit: line.unit, rateInclTax: "", taxableRate: "" });
+  };
+
+  const removeItem = (itemId) => setItems((current) => current.filter((item) => item.id !== itemId));
+
+  const generatePerforma = (event) => {
+    event.preventDefault();
+    if (!buyer.name.trim() || !buyer.phone.trim()) {
+      toast("Enter buyer name and phone number.", "error");
+      return;
+    }
+    if (!items.length) {
+      toast("Add at least one item before generating performa bill.", "error");
+      return;
+    }
+    const bill = {
+      id: uid("PF"),
+      billNumber: String(bills.length + 1).padStart(5, "0"),
+      date: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).replace(/ /g, "-"),
+      buyerName: buyer.name.trim(),
+      buyerAddress1: buyer.address1.trim(),
+      buyerAddress2: buyer.address2.trim(),
+      buyerPhone: normalizePhone(buyer.phone),
+      buyerState: buyer.state.trim() || "Kerala",
+      buyerStateCode: buyer.stateCode.trim() || "32",
+      items,
+      subtotal,
+      cgst,
+      sgst,
+      roundOff,
+      total: roundedTotal,
+      sellerName: session.name,
+      createdAt: new Date().toISOString()
+    };
+    commit((current) => ({
+      ...current,
+      sellerPerformaBills: [bill, ...(current.sellerPerformaBills || [])]
+    }));
+    setItems([]);
+    setBuyer({ name: "", address1: "", address2: "", phone: "", state: "Kerala", stateCode: "32" });
+    toast("Performa bill generated.");
+  };
+
+  const printPerforma = (bill) => {
+    setPrintTargetBill(bill);
+    window.document.title = `Performa ${bill.billNumber} - Aimies`;
+    window.setTimeout(() => window.print(), 0);
+  };
+
+  const deletePerforma = (billId) => {
+    const confirmed = window.confirm("Delete this performa bill?");
+    if (!confirmed) return;
+    commit((current) => ({
+      ...current,
+      sellerPerformaBills: (current.sellerPerformaBills || []).filter((bill) => bill.id !== billId)
+    }));
+    toast("Performa bill deleted.");
+  };
+
+  return (
+    <DashboardGrid>
+      <Panel title="Create Performa Bill" className="seller-bill-panel">
+        <form className="seller-bill-form" onSubmit={generatePerforma}>
+          <label>Buyer Name<input value={buyer.name} onChange={(event) => setBuyer({ ...buyer, name: event.target.value })} placeholder="SABU VP" /></label>
+          <label>Phone<input value={buyer.phone} onChange={(event) => setBuyer({ ...buyer, phone: event.target.value })} placeholder="Buyer mobile" /></label>
+          <label>Address Line 1<input value={buyer.address1} onChange={(event) => setBuyer({ ...buyer, address1: event.target.value })} placeholder="Shop / place" /></label>
+          <label>Address Line 2<input value={buyer.address2} onChange={(event) => setBuyer({ ...buyer, address2: event.target.value })} placeholder="City, district, PIN" /></label>
+          <label>State<input value={buyer.state} onChange={(event) => setBuyer({ ...buyer, state: event.target.value })} /></label>
+          <label>State Code<input value={buyer.stateCode} onChange={(event) => setBuyer({ ...buyer, stateCode: event.target.value })} /></label>
+          <button className="primary-button" type="submit">Generate Performa</button>
+        </form>
+      </Panel>
+
+      <Panel title="Add Performa Item" className="seller-bill-panel">
+        <form className="seller-bill-form" onSubmit={addItem}>
+          <label>Item
+            <select value={line.product} onChange={(event) => setLine({ ...line, product: event.target.value })}>
+              {sellerOilItems.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+            </select>
+          </label>
+          {line.product === "custom" ? <label>Custom Item<input value={line.customName} onChange={(event) => setLine({ ...line, customName: event.target.value })} /></label> : null}
+          <label>Quantity<input type="number" min="0" step="0.1" value={line.quantity} onChange={(event) => setLine({ ...line, quantity: event.target.value })} /></label>
+          <label>Unit<input value={line.unit} onChange={(event) => setLine({ ...line, unit: event.target.value.toUpperCase() })} placeholder="BOX / NOS" /></label>
+          <label>Rate incl. tax<input type="number" min="0" step="0.01" value={line.rateInclTax} onChange={(event) => setLine({ ...line, rateInclTax: event.target.value, taxableRate: event.target.value ? (Number(event.target.value) / 1.05).toFixed(2) : "" })} /></label>
+          <label>Taxable Rate<input type="number" min="0" step="0.01" value={line.taxableRate} onChange={(event) => setLine({ ...line, taxableRate: event.target.value })} /></label>
+          <button className="primary-button" type="submit">Add Item</button>
+        </form>
+      </Panel>
+
+      <Panel title="Current Performa Items" className="full-row-panel">
+        {items.length ? (
+          <>
+            <div className="data-table performa-item-table">
+              <div className="data-head"><span>Item</span><span>HSN/SAC</span><span>Qty</span><span>Rate incl.</span><span>Rate</span><span>Amount</span><span>Action</span></div>
+              {items.map((item) => (
+                <div className="data-row" key={item.id}>
+                  <span>{item.name}</span><span>{item.hsn}</span><span>{stockAmount(item.quantity)} {item.unit}</span><span>{money(item.rateInclTax)}</span><span>{money(item.taxableRate)}</span><span>{money(item.amount)}</span>
+                  <span><button type="button" className="icon-action danger" title="Remove item" aria-label={`Remove ${item.name}`} onClick={() => removeItem(item.id)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16" /><path d="M9 7V5h6v2" /><path d="M6 7l1 14h10l1-14" /></svg></button></span>
+                </div>
+              ))}
+            </div>
+            <p className="seller-total">Performa total: {money(roundedTotal)}</p>
+          </>
+        ) : <p className="empty-note">Add items to start a performa bill.</p>}
+      </Panel>
+
+      {previewBill ? (
+        <Panel title="Generated Performa" className="full-row-panel seller-preview-panel">
+          <PerformaBillPreview bill={previewBill} />
+          <div className="seller-share-actions">
+            <button type="button" className="primary-button" onClick={() => printPerforma(previewBill)}>Print Performa</button>
+          </div>
+        </Panel>
+      ) : null}
+
+      <Panel title="Performa Bill History" className="full-row-panel">
+        {bills.length ? <PerformaHistoryTable bills={bills} onPrint={printPerforma} onDelete={deletePerforma} /> : <p className="empty-note">No performa bills generated yet.</p>}
+      </Panel>
+    </DashboardGrid>
+  );
+}
+
+function PerformaHistoryTable({ bills, onPrint, onDelete }) {
+  return (
+    <div className="data-table performa-history-table">
+      <div className="data-head"><span>No.</span><span>Buyer</span><span>Phone</span><span>Total</span><span>Date</span><span>Action</span></div>
+      {bills.map((bill) => (
+        <div className="data-row" key={bill.id}>
+          <span>{bill.billNumber}</span><span>{bill.buyerName}</span><span>{bill.buyerPhone}</span><span>{money(bill.total)}</span><span>{bill.date}</span>
+          <span className="seller-row-actions">
+            <button type="button" className="secondary-button compact-action-button" onClick={() => onPrint(bill)}>Print</button>
+            <button type="button" className="icon-action danger" title="Delete performa" aria-label={`Delete performa ${bill.billNumber}`} onClick={() => onDelete(bill.id)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16" /><path d="M9 7V5h6v2" /><path d="M6 7l1 14h10l1-14" /></svg></button>
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PerformaBillPreview({ bill }) {
+  const totalQuantity = bill.items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+  return (
+    <article className="performa-preview">
+      <h2>PERFORMA</h2>
+      <section className="performa-top">
+        <div className="performa-company">
+          <strong>{COMPANY_LEGAL_NAME}</strong>
+          <span>{COMPANY_ADDRESS}</span>
+          <span>Fssai Lic. No{COMPANY_FSSAI}</span>
+          <span>GSTIN/UIN: {COMPANY_GSTIN}</span>
+          <span>State Name : Kerala, Code : 32</span>
+          <span>E-Mail : {COMPANY_EMAIL}</span>
+          <b>To</b>
+          <strong>{bill.buyerName}</strong>
+          <span>{bill.buyerAddress1}</span>
+          <span>{bill.buyerAddress2}</span>
+          <span>Mob: {bill.buyerPhone}</span>
+          <span>State Name : {bill.buyerState}</span>
+        </div>
+        <div className="performa-invoice-box">
+          <span>Invoice No.<b>{bill.billNumber}</b></span>
+          <span>Dated<b>{bill.date}</b></span>
+        </div>
+      </section>
+      <div className="data-table performa-preview-table">
+        <div className="data-head"><span>Sl No</span><span>Item Details</span><span>HSN/SAC</span><span>Quantity</span><span>Rate (incl. of tax)</span><span>Rate</span><span>Amount</span></div>
+        {bill.items.map((item, index) => (
+          <div className="data-row" key={item.id}>
+            <span>{index + 1}</span><span>{item.name}</span><span>{item.hsn}</span><span>{stockAmount(item.quantity)} {item.unit}</span><span>{stockAmount(item.rateInclTax)}</span><span>{stockAmount(item.taxableRate)}</span><span>{stockAmount(item.amount)}</span>
+          </div>
+        ))}
+        <div className="data-row performa-summary-row"><span></span><span></span><span></span><span></span><span></span><span></span><span>{stockAmount(bill.subtotal)}</span></div>
+        <div className="data-row performa-summary-row"><span></span><span>CGST 2.5%</span><span></span><span></span><span></span><span></span><span>{stockAmount(bill.cgst)}</span></div>
+        <div className="data-row performa-summary-row"><span></span><span>SGST 2.5%</span><span></span><span></span><span></span><span></span><span>{stockAmount(bill.sgst)}</span></div>
+        <div className="data-row performa-summary-row"><span></span><span>ROUND OFF</span><span></span><span></span><span></span><span></span><span>{stockAmount(bill.roundOff)}</span></div>
+        <div className="data-row performa-total-row"><span></span><span>Total</span><span></span><span>{stockAmount(totalQuantity)}</span><span></span><span></span><span>Rs. {stockAmount(bill.total)}</span></div>
+      </div>
+      <strong className="performa-words">{amountInWords(bill.total)}</strong>
+      <section className="performa-footer-grid">
+        <div>
+          <b>Terms & Conditions :</b>
+          <span>1) The Bill amount should be settled through RTGS before unloading the products.</span>
+          <span>2) After making sure the items delivered is in proper condition, the Received Note should be given to the staff with Seal and Sign.</span>
+          <span>3) The rate of the product will remain the same only till the date mentioned in the purchase order and is subjected to market fluctuation from thereafter.</span>
+        </div>
+        <div>
+          <b>for {COMPANY_LEGAL_NAME}</b>
+          <span>Company's Bank Details</span>
+          <span>A/c Holder's Name : {COMPANY_LEGAL_NAME}</span>
+          <span>Bank Name : HDFC</span>
+          <span>A/c No. : 50200063275093</span>
+          <span>Branch & IFS Code : CHENDAMANGALAM & HDFC0000823</span>
+          <span>SWIFT Code : HDFCINBBCOC</span>
+          <strong>Authorised Signatory</strong>
+        </div>
+      </section>
+    </article>
   );
 }
 

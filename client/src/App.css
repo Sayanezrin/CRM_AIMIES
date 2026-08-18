@@ -1211,6 +1211,142 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
+.performa-item-table,
+.performa-history-table {
+  max-height: 360px;
+  overflow: auto;
+}
+
+.performa-item-table .data-head,
+.performa-item-table .data-row {
+  grid-template-columns: minmax(280px, 1fr) 110px 130px 130px 130px 130px 90px;
+  min-width: 1000px;
+}
+
+.performa-history-table .data-head,
+.performa-history-table .data-row {
+  grid-template-columns: 120px 220px 150px 140px 160px 150px;
+  min-width: 940px;
+}
+
+.performa-preview {
+  display: grid;
+  gap: 0;
+  border: 2px solid #111;
+  background: #fff;
+  color: #111;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  overflow: auto;
+}
+
+.performa-preview h2 {
+  margin: 0;
+  border-bottom: 2px solid #111;
+  padding: 6px;
+  color: #111;
+  text-align: center;
+  text-decoration: underline;
+  font-size: 22px;
+  letter-spacing: 0;
+}
+
+.performa-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr);
+  border-bottom: 2px solid #111;
+}
+
+.performa-company {
+  display: grid;
+  gap: 5px;
+  border-right: 2px solid #111;
+  padding: 8px;
+}
+
+.performa-company strong:first-child {
+  font-size: 18px;
+}
+
+.performa-invoice-box {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-content: start;
+}
+
+.performa-invoice-box span {
+  display: grid;
+  gap: 8px;
+  min-height: 70px;
+  border-right: 1px solid #111;
+  border-bottom: 1px solid #111;
+  padding: 8px;
+}
+
+.performa-invoice-box span:nth-child(2n) {
+  border-right: 0;
+}
+
+.performa-preview-table {
+  border: 0;
+  border-radius: 0;
+}
+
+.performa-preview-table .data-head,
+.performa-preview-table .data-row {
+  grid-template-columns: 80px minmax(320px, 1fr) 110px 110px 120px 110px 140px;
+  min-width: 1000px;
+}
+
+.performa-preview-table .data-head span,
+.performa-preview-table .data-row span {
+  min-height: 32px;
+  border-right: 1px solid #111;
+  padding: 5px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.performa-preview-table .data-head span:last-child,
+.performa-preview-table .data-row span:last-child {
+  border-right: 0;
+  text-align: right;
+}
+
+.performa-summary-row span,
+.performa-total-row span {
+  font-weight: 700;
+}
+
+.performa-words {
+  border-top: 2px solid #111;
+  padding: 6px 8px;
+}
+
+.performa-footer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  border-top: 2px solid #111;
+}
+
+.performa-footer-grid > div {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-height: 170px;
+  padding: 8px;
+}
+
+.performa-footer-grid > div:first-child {
+  border-right: 2px solid #111;
+}
+
+.performa-footer-grid strong:last-child {
+  align-self: end;
+  justify-self: end;
+  margin-top: 18px;
+}
+
 @media (max-width: 1180px) {
   .portal-shell { grid-template-columns: 210px minmax(0, 1fr); }
   .dashboard-grid { grid-template-columns: 1fr; }
@@ -1221,7 +1357,11 @@ button:disabled {
   .finance-summary,
   .stock-capacity-grid,
   .seller-bill-form,
-  .seller-bill-meta { grid-template-columns: 1fr; }
+  .seller-bill-meta,
+  .performa-top,
+  .performa-footer-grid { grid-template-columns: 1fr; }
+  .performa-company,
+  .performa-footer-grid > div:first-child { border-right: 0; }
   .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .employee-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .profile-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1492,11 +1632,14 @@ button:disabled {
   }
 
   .seller-bill-preview,
-  .seller-bill-preview * {
+  .seller-bill-preview *,
+  .performa-preview,
+  .performa-preview * {
     visibility: visible;
   }
 
-  .seller-bill-preview {
+  .seller-bill-preview,
+  .performa-preview {
     width: 100%;
     border: 0;
     border-radius: 0;
@@ -1507,6 +1650,68 @@ button:disabled {
     font-size: 10.5px;
     page-break-inside: avoid;
     break-inside: avoid;
+  }
+
+  .performa-preview {
+    border: 2px solid #111;
+    gap: 0;
+    color: #111;
+    font-size: 10px;
+  }
+
+  .performa-preview h2 {
+    padding: 4px;
+    font-size: 16px;
+  }
+
+  .performa-top {
+    grid-template-columns: minmax(0, 1fr) 230px;
+  }
+
+  .performa-company {
+    gap: 2px;
+    border-right: 2px solid #111;
+    padding: 5px;
+  }
+
+  .performa-company strong:first-child {
+    font-size: 14px;
+  }
+
+  .performa-invoice-box span {
+    min-height: 48px;
+    gap: 4px;
+    padding: 5px;
+  }
+
+  .performa-preview-table {
+    overflow: visible;
+  }
+
+  .performa-preview-table .data-head,
+  .performa-preview-table .data-row {
+    min-width: 0;
+    grid-template-columns: 42px minmax(175px, 1fr) 68px 72px 72px 72px 86px;
+  }
+
+  .performa-preview-table .data-head span,
+  .performa-preview-table .data-row span {
+    min-height: 24px;
+    padding: 3px;
+  }
+
+  .performa-words {
+    padding: 4px 5px;
+  }
+
+  .performa-footer-grid {
+    grid-template-columns: 1fr 1.1fr;
+  }
+
+  .performa-footer-grid > div {
+    min-height: 105px;
+    gap: 2px;
+    padding: 5px;
   }
 
   .seller-bill-preview header,

@@ -33,7 +33,8 @@ const emptyPortalState = {
   leaves: [],
   attendance: [],
   sellerCustomers: [],
-  sellerBills: []
+  sellerBills: [],
+  sellerPerformaBills: []
 };
 
 const employee = {
@@ -224,7 +225,8 @@ function normalizePortalState(payload) {
     logins: payload?.logins || [],
     attendance: payload?.attendance || [],
     sellerCustomers: payload?.sellerCustomers || [],
-    sellerBills: payload?.sellerBills || []
+    sellerBills: payload?.sellerBills || [],
+    sellerPerformaBills: payload?.sellerPerformaBills || []
   };
 }
 
