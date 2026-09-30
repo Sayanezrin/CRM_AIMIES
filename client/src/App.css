@@ -1015,6 +1015,21 @@ button:disabled {
   min-height: 42px;
 }
 
+.seller-bill-form .checkbox-label {
+  display: flex;
+  min-height: 40px;
+  flex-direction: row;
+  align-items: center;
+  gap: 9px;
+}
+
+.seller-bill-form .checkbox-label input {
+  width: 18px;
+  min-height: 18px;
+  margin: 0;
+  padding: 0;
+}
+
 .seller-compliance-note {
   display: grid;
   gap: 4px;
@@ -1173,7 +1188,7 @@ button:disabled {
   justify-self: end;
   min-width: min(100%, 520px);
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
   border: 1px solid var(--line);
   border-radius: 7px;
   overflow: hidden;
@@ -1194,6 +1209,18 @@ button:disabled {
   color: var(--muted);
   font-size: 12px;
   text-transform: uppercase;
+}
+
+.seller-live-totals {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 18px;
+  color: var(--muted);
+}
+
+.seller-live-totals b {
+  color: var(--ink);
 }
 
 .seller-qr-text {

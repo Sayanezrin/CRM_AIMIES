@@ -307,14 +307,50 @@ const stockProducts = [
   { id: "p15kg", name: "15 kg Can", piecesPerCase: 1, drawPerPiece: { oil: 16.3, can15kg: 1, sticker15kg: 1, canCap: 1, band: 1 }, drawPerCase: { plastic: 1, box15kg: 1 } }
 ];
 const sellerOilItems = [
-  { id: "oil500", name: "Aimies Coconut Oil 1/2 Ltr Bottle", unit: "piece", hsn: "15131900" },
-  { id: "oil1l", name: "Aimies Coconut Oil 1 Ltr Bottle", unit: "piece", hsn: "15131900" },
-  { id: "oil2l", name: "Aimies Coconut Oil 2 Ltr Bottle", unit: "piece", hsn: "15131900" },
-  { id: "box12", name: "Aimies Coconut Oil Box - 12 Pieces", unit: "box", hsn: "15131900" },
-  { id: "box16", name: "Aimies Coconut Oil Box - 16 Pieces", unit: "box", hsn: "15131900" },
-  { id: "box24", name: "Aimies Coconut Oil Box - 24 Pieces", unit: "box", hsn: "15131900" },
+  { id: "oil-half-bottle-box", name: "Aimies Coconut Oil 1/2 Ltr Bottle - (Box)", unit: "box", hsn: "15131900" },
+  { id: "oil-half-bottle-piece", name: "Aimies Coconut Oil 1/2 Ltr Bottle - Piece", unit: "piece", hsn: "15131900" },
+  { id: "oil1l", name: "Aimies Coconut Oil 1 Ltr Bottle - (Box)", unit: "box", hsn: "15131900" },
+  { id: "oil-1l-bottle-piece", name: "Aimies Coconut Oil 1 Ltr Bottle - Piece", unit: "piece", hsn: "15131900" },
+  { id: "oil-half-pouch-box", name: "Aimies Coconut Oil 1/2 Ltr Pouch - (Box)", unit: "box", hsn: "15131900" },
+  { id: "oil-half-pouch-piece", name: "Aimies Coconut Oil 1/2 Ltr Pouch - Piece", unit: "piece", hsn: "15131900" },
+  { id: "oil-1l-pouch-box", name: "Aimies Coconut Oil 1 Ltr Pouch - (Box)", unit: "box", hsn: "15131900" },
+  { id: "oil-1l-pouch-piece", name: "Aimies Coconut Oil 1 Ltr Pouch - Piece", unit: "piece", hsn: "15131900" },
+  { id: "oil-400g-pouch-box", name: "Aimies Coconut Oil 400 GM Pouch - (Box)", unit: "box", hsn: "15131900" },
+  { id: "oil-400g-pouch-piece", name: "Aimies Coconut Oil 400 GM Pouch - (Piece)", unit: "piece", hsn: "15131900" },
+  { id: "oil-455ml-bottle-box", name: "Aimies Coconut Oil 455 ML Bottle Box", unit: "box", hsn: "15131900" },
+  { id: "oil-455ml-bottle-piece", name: "Aimies Coconut Oil 455 ML Bottle Piece", unit: "piece", hsn: "15131900" },
+  { id: "oil-800g-pouch-box", name: "Aimies Coconut Oil 800 GM Pouch - (Box)", unit: "box", hsn: "15131900" },
+  { id: "oil-800g-pouch-piece", name: "Aimies Coconut Oil 800 GM Pouch - (Piece)", unit: "piece", hsn: "15131900" },
+  { id: "oil-910ml-bottle-box", name: "Aimies Coconut Oil 910 ML Bottle Box", unit: "box", hsn: "15131900" },
+  { id: "oil-910ml-bottle-piece", name: "Aimies Coconut Oil 910 ML Bottle Piece", unit: "piece", hsn: "15131900" },
+  { id: "oil-2l-bottle-box", name: "Aimies Coconut Oil 2 Ltr Bottle - Box", unit: "box", hsn: "15131900" },
+  { id: "oil2l", name: "Aimies Coconut Oil 2 Ltr Bottle Piece", unit: "piece", hsn: "15131900" },
+  { id: "oil-5l-jar-box", name: "Aimies Coconut Oil Jar 5 Ltr Box", unit: "box", hsn: "15131900" },
+  { id: "oil-5l-jar-piece", name: "Aimies Coconut Oil Jar 5 Ltr Piece", unit: "piece", hsn: "15131900" },
+  { id: "oil-15kg-jar", name: "Aimies Coconut Oil Jar 15 KG", unit: "piece", hsn: "15131900" },
+  { id: "coconut-oil-15kg-jar", name: "Coconut Oil Jar 15 Kg", unit: "piece", hsn: "15131900" },
+  { id: "oil-yellow-1l-box", name: "Aimies Coconut Oil Yellow Bottle 1 Ltr Box", unit: "box", hsn: "15131900" },
+  { id: "oil-yellow-1l-piece", name: "Aimies Coconut Oil Yellow Bottle 1 Ltr Piece", unit: "piece", hsn: "15131900" },
+  { id: "oil-yellow-2l-piece", name: "Aimies Coconut Oil Yellow Bottle 2 Ltr Piece", unit: "piece", hsn: "15131900" },
+  { id: "coconut-oil", name: "Coconut Oil", unit: "litre", hsn: "15131900" },
+  { id: "aimies-coconut-oil", name: "Aimies Coconut Oil", unit: "litre", hsn: "15131900" },
   { id: "custom", name: "Custom Oil Item", unit: "item", hsn: "15131900" }
 ];
+const indianStates = [
+  ["Andaman and Nicobar Islands", "35"], ["Andhra Pradesh", "37"], ["Arunachal Pradesh", "12"],
+  ["Assam", "18"], ["Bihar", "10"], ["Chandigarh", "04"], ["Chhattisgarh", "22"],
+  ["Dadra and Nagar Haveli and Daman and Diu", "26"], ["Delhi", "07"], ["Goa", "30"],
+  ["Gujarat", "24"], ["Haryana", "06"], ["Himachal Pradesh", "02"], ["Jammu and Kashmir", "01"],
+  ["Jharkhand", "20"], ["Karnataka", "29"], ["Kerala", "32"], ["Ladakh", "38"],
+  ["Lakshadweep", "31"], ["Madhya Pradesh", "23"], ["Maharashtra", "27"], ["Manipur", "14"],
+  ["Meghalaya", "17"], ["Mizoram", "15"], ["Nagaland", "13"], ["Odisha", "21"],
+  ["Puducherry", "34"], ["Punjab", "03"], ["Rajasthan", "08"], ["Sikkim", "11"],
+  ["Tamil Nadu", "33"], ["Telangana", "36"], ["Tripura", "16"], ["Uttar Pradesh", "09"],
+  ["Uttarakhand", "05"], ["West Bengal", "19"]
+].map(([name, code]) => ({ name, code }));
+const stateCodeByName = Object.fromEntries(indianStates.map((state) => [state.name, state.code]));
+const GST_RATES = [0, 5, 18];
+const LITRE_TO_KG = 0.91;
 const initialStockLevels = Object.fromEntries(stockMaterials.map((material) => [material.id, 0]));
 
 function normalizeStock(stock = {}) {
@@ -1253,7 +1289,11 @@ function sellerBillText(bill) {
     ...bill.items.map((item, index) => `${index + 1}. ${item.name} - HSN ${item.hsn} - ${stockAmount(item.quantity)} ${item.unit} - ${money(item.amount)}`),
     "",
     `Subtotal: ${money(bill.subtotal)}`,
-    bill.taxPercent ? `CGST: ${money(bill.cgst)} | SGST: ${money(bill.sgst)}` : "",
+    `Taxable Amount: ${money(bill.taxableAmount ?? bill.subtotal)}`,
+    bill.cgst ? `CGST: ${money(bill.cgst)} | SGST: ${money(bill.sgst)}` : "",
+    bill.igst ? `IGST: ${money(bill.igst)}` : "",
+    bill.roundOff ? `Round Off: ${money(bill.roundOff)}` : "",
+    `Tax Amount: ${money(bill.taxAmount ?? ((bill.cgst || 0) + (bill.sgst || 0) + (bill.igst || 0)))}`,
     `Total: ${money(bill.total)}`,
     `Seller: ${bill.sellerName}`,
     "",
@@ -1266,8 +1306,8 @@ function SellerBillingPage({ store, commit, session }) {
   const customers = store.sellerCustomers || [];
   const bills = store.sellerBills || [];
   const [customer, setCustomer] = useState({ name: "", phone: "", address: "", gstin: "", state: "Kerala", stateCode: "32" });
-  const [billInfo, setBillInfo] = useState({ documentType: "retail", paymentMode: "Cash", taxPercent: "0", destination: "", vehicleNumber: "", irn: "", ackNo: "", ackDate: "", ewayBillNo: "", signedQr: "", note: "" });
-  const [line, setLine] = useState({ product: "oil1l", customName: "", quantity: "1", amount: "" });
+  const [billInfo, setBillInfo] = useState({ supplyType: "B2C", paymentMode: "Cash", taxPercent: "5", applyRoundOff: false, destination: "", vehicleNumber: "", irn: "", ackNo: "", ackDate: "", ewayBillNo: "", signedQr: "", note: "" });
+  const [line, setLine] = useState({ product: "oil1l", customName: "", quantity: "1", quantityUnit: "box", amount: "" });
   const [items, setItems] = useState([]);
   const [printTargetBill, setPrintTargetBill] = useState(null);
   const latestBill = bills[0] || null;
@@ -1276,7 +1316,9 @@ function SellerBillingPage({ store, commit, session }) {
   const billSubtotal = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const taxPercent = Math.max(0, Number(billInfo.taxPercent || 0));
   const taxAmount = billSubtotal * taxPercent / 100;
-  const billTotal = billSubtotal + taxAmount;
+  const preRoundTotal = billSubtotal + taxAmount;
+  const roundOff = billInfo.applyRoundOff ? Math.round(preRoundTotal) - preRoundTotal : 0;
+  const billTotal = preRoundTotal + roundOff;
 
   const selectCustomer = (phone) => {
     const savedCustomer = customers.find((item) => item.phone === phone);
@@ -1300,12 +1342,13 @@ function SellerBillingPage({ store, commit, session }) {
         name,
         hsn: selectedItem.hsn,
         quantity,
-        unit: selectedItem.unit,
+        unit: line.quantityUnit,
+        quantityKg: line.quantityUnit === "litre" ? quantity * LITRE_TO_KG : line.quantityUnit === "kg" ? quantity : null,
         rate: amount / quantity,
         amount
       }
     ]);
-    setLine({ product: line.product, customName: "", quantity: "1", amount: "" });
+    setLine({ product: line.product, customName: "", quantity: "1", quantityUnit: line.quantityUnit, amount: "" });
   };
 
   const removeItem = (itemId) => {
@@ -1320,12 +1363,7 @@ function SellerBillingPage({ store, commit, session }) {
     const customerGstin = customer.gstin.trim().toUpperCase();
     const customerState = customer.state.trim() || "Kerala";
     const customerStateCode = customer.stateCode.trim() || "32";
-    const isTaxInvoice = billInfo.documentType === "tax";
     const irn = billInfo.irn.trim();
-    if (isTaxInvoice && (!customerGstin || !irn)) {
-      toast("For a GST tax invoice, enter buyer GSTIN and IRN after e-invoice generation.", "error");
-      return;
-    }
     if (!customerName || !customerPhone) {
       toast("Enter buyer name and phone number.", "error");
       return;
@@ -1343,8 +1381,8 @@ function SellerBillingPage({ store, commit, session }) {
       id: uid("BILL"),
       billNumber: `LS-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${String(bills.length + 1).padStart(3, "0")}`,
       date: new Date().toLocaleString("en-IN"),
-      documentType: billInfo.documentType,
-      documentTitle: isTaxInvoice ? "Tax Invoice" : "Retail Sale Bill",
+      supplyType: billInfo.supplyType,
+      documentTitle: "TAX INVOICE",
       irn,
       ackNo: billInfo.ackNo.trim(),
       ackDate: billInfo.ackDate,
@@ -1359,9 +1397,14 @@ function SellerBillingPage({ store, commit, session }) {
       placeOfSupply: `${customerState}, Code: ${customerStateCode}`,
       paymentMode: billInfo.paymentMode,
       taxPercent,
-      cgst: taxAmount / 2,
-      sgst: taxAmount / 2,
+      taxableAmount: billSubtotal,
+      taxAmount,
+      taxType: customerState === "Kerala" ? "INTRASTATE" : "INTERSTATE",
+      cgst: customerState === "Kerala" ? taxAmount / 2 : 0,
+      sgst: customerState === "Kerala" ? taxAmount / 2 : 0,
+      igst: customerState === "Kerala" ? 0 : taxAmount,
       subtotal: billSubtotal,
+      roundOff,
       destination: billInfo.destination.trim(),
       vehicleNumber: billInfo.vehicleNumber.trim().toUpperCase(),
       note: billInfo.note.trim(),
@@ -1397,7 +1440,7 @@ function SellerBillingPage({ store, commit, session }) {
     });
     setItems([]);
     setCustomer({ name: "", phone: "", address: "", gstin: "", state: "Kerala", stateCode: "32" });
-    setBillInfo({ documentType: "retail", paymentMode: "Cash", taxPercent: "0", destination: "", vehicleNumber: "", irn: "", ackNo: "", ackDate: "", ewayBillNo: "", signedQr: "", note: "" });
+    setBillInfo({ supplyType: "B2C", paymentMode: "Cash", taxPercent: "5", applyRoundOff: false, destination: "", vehicleNumber: "", irn: "", ackNo: "", ackDate: "", ewayBillNo: "", signedQr: "", note: "" });
     toast("Bill generated and customer list updated.");
   };
 
@@ -1448,18 +1491,22 @@ function SellerBillingPage({ store, commit, session }) {
           <span>The printed bill uses the same invoice pattern for every amount. For bills of Rs. 50,000 or more, buyer address, state, and state code are required. For B2B/export GST tax invoices, generate IRN/QR through the authorised IRP first, then enter IRN/Ack details here.</span>
         </div>
         <form className="seller-bill-form" onSubmit={generateBill}>
-          <label>Document Type
-            <select value={billInfo.documentType} onChange={(event) => setBillInfo({ ...billInfo, documentType: event.target.value })}>
-              <option value="retail">Retail Sale Bill</option>
-              <option value="tax">GST Tax Invoice with IRN</option>
+          <label>Supply Type
+            <select value={billInfo.supplyType} onChange={(event) => setBillInfo({ ...billInfo, supplyType: event.target.value })}>
+              <option value="B2B">B2B – Business to Business</option>
+              <option value="B2C">B2C – Business to Consumer</option>
             </select>
           </label>
           <label>Buyer Name<input value={customer.name} onChange={(event) => setCustomer({ ...customer, name: event.target.value })} placeholder="Customer name" /></label>
           <label>Phone Number<input value={customer.phone} onChange={(event) => setCustomer({ ...customer, phone: event.target.value })} placeholder="Customer phone" /></label>
           <label>Address<input value={customer.address} onChange={(event) => setCustomer({ ...customer, address: event.target.value })} placeholder="Buyer address" /></label>
           <label>GSTIN Optional<input value={customer.gstin} onChange={(event) => setCustomer({ ...customer, gstin: event.target.value })} placeholder="GST number if available" /></label>
-          <label>State / Place of Supply<input value={customer.state} onChange={(event) => setCustomer({ ...customer, state: event.target.value })} placeholder="Kerala" /></label>
-          <label>State Code<input value={customer.stateCode} onChange={(event) => setCustomer({ ...customer, stateCode: event.target.value })} placeholder="32" /></label>
+          <label>State / Place of Supply
+            <select value={customer.state} onChange={(event) => setCustomer({ ...customer, state: event.target.value, stateCode: stateCodeByName[event.target.value] })}>
+              {indianStates.map((state) => <option key={state.code} value={state.name}>{state.name}</option>)}
+            </select>
+          </label>
+          <label>State Code<input value={customer.stateCode} readOnly aria-label="State code (automatically populated)" /></label>
           <label>Payment Mode
             <select value={billInfo.paymentMode} onChange={(event) => setBillInfo({ ...billInfo, paymentMode: event.target.value })}>
               <option value="Cash">Cash</option>
@@ -1469,7 +1516,12 @@ function SellerBillingPage({ store, commit, session }) {
               <option value="Bank Transfer">Bank Transfer</option>
             </select>
           </label>
-          <label>GST %<input type="number" min="0" step="0.01" value={billInfo.taxPercent} onChange={(event) => setBillInfo({ ...billInfo, taxPercent: event.target.value })} placeholder="0 or 5" /></label>
+          <label>GST Rate
+            <select value={billInfo.taxPercent} onChange={(event) => setBillInfo({ ...billInfo, taxPercent: event.target.value })}>
+              {GST_RATES.map((rate) => <option key={rate} value={rate}>{rate}%</option>)}
+            </select>
+          </label>
+          <label className="checkbox-label"><input type="checkbox" checked={billInfo.applyRoundOff} onChange={(event) => setBillInfo({ ...billInfo, applyRoundOff: event.target.checked })} />Round off invoice total</label>
           <label>Destination<input value={billInfo.destination} onChange={(event) => setBillInfo({ ...billInfo, destination: event.target.value })} placeholder="Delivery destination" /></label>
           <label>Vehicle No.<input value={billInfo.vehicleNumber} onChange={(event) => setBillInfo({ ...billInfo, vehicleNumber: event.target.value })} placeholder="Optional vehicle number" /></label>
           <label>IRN<input value={billInfo.irn} onChange={(event) => setBillInfo({ ...billInfo, irn: event.target.value })} placeholder="Required for GST tax invoice" /></label>
@@ -1493,12 +1545,21 @@ function SellerBillingPage({ store, commit, session }) {
       <Panel title="Add Oil Item" className="seller-bill-panel full-row-panel">
         <form className="seller-bill-form" onSubmit={addItem}>
           <label>Oil Item
-            <select value={line.product} onChange={(event) => setLine({ ...line, product: event.target.value })}>
+            <select value={line.product} onChange={(event) => {
+              const product = sellerOilItems.find((item) => item.id === event.target.value);
+              setLine({ ...line, product: event.target.value, quantityUnit: product?.unit || "item" });
+            }}>
               {sellerOilItems.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
             </select>
           </label>
           {line.product === "custom" ? <label>Custom Item<input value={line.customName} onChange={(event) => setLine({ ...line, customName: event.target.value })} placeholder="Oil item name" /></label> : null}
-          <label>Quantity<input type="number" min="0" step="0.1" value={line.quantity} onChange={(event) => setLine({ ...line, quantity: event.target.value })} /></label>
+          <label>Quantity<input type="number" min="0" step="0.001" value={line.quantity} onChange={(event) => setLine({ ...line, quantity: event.target.value })} /></label>
+          <label>Quantity Unit
+            <select value={line.quantityUnit} onChange={(event) => setLine({ ...line, quantityUnit: event.target.value })}>
+              {[selectedItem.unit, "litre", "kg"].filter((unit, index, all) => all.indexOf(unit) === index).map((unit) => <option key={unit} value={unit}>{unit}</option>)}
+            </select>
+          </label>
+          {line.quantityUnit === "litre" ? <label>Quantity in KG<input value={(Number(line.quantity || 0) * LITRE_TO_KG).toFixed(3)} readOnly /></label> : null}
           <label>Manual Amount<input type="number" min="0" step="0.01" value={line.amount} onChange={(event) => setLine({ ...line, amount: event.target.value })} placeholder="Amount collected" /></label>
           <button className="primary-button" type="submit">Add Item</button>
         </form>
@@ -1512,13 +1573,18 @@ function SellerBillingPage({ store, commit, session }) {
               {items.map((item) => (
                 <div className="data-row" key={item.id}>
                   <span>{item.name}</span>
-                  <span>{stockAmount(item.quantity)} {item.unit}</span>
+                  <span>{stockAmount(item.quantity)} {item.unit}{item.quantityKg !== null && item.quantityKg !== undefined ? ` (${stockAmount(item.quantityKg)} kg)` : ""}</span>
                   <span>{money(item.amount)}</span>
                   <span><button type="button" className="icon-action danger" title="Remove item" aria-label={`Remove ${item.name}`} onClick={() => removeItem(item.id)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16" /><path d="M9 7V5h6v2" /><path d="M6 7l1 14h10l1-14" /></svg></button></span>
                 </div>
               ))}
             </div>
-            <p className="seller-total">Current total: {money(billTotal)}</p>
+            <div className="seller-live-totals">
+              <span>Taxable Amount: <b>{money(billSubtotal)}</b></span>
+              <span>GST ({taxPercent}%): <b>{money(taxAmount)}</b></span>
+              {billInfo.applyRoundOff ? <span>Round Off: <b>{money(roundOff)}</b></span> : null}
+              <span>Total Invoice Amount: <b>{money(billTotal)}</b></span>
+            </div>
           </>
         ) : <p className="empty-note">Add oil items to start a bill.</p>}
       </Panel>
@@ -1835,7 +1901,7 @@ function BillPreview({ bill }) {
         <img src={aimiesLogoImage} alt="Aimies" />
         <div>
           <strong>{COMPANY_LEGAL_NAME}</strong>
-          <span>{bill.documentTitle || "Retail Sale Bill"}</span>
+          <span>{bill.documentTitle || "TAX INVOICE"}</span>
           <small>{COMPANY_ADDRESS}</small>
           <small>GSTIN: {COMPANY_GSTIN} | FSSAI: {COMPANY_FSSAI}</small>
           <small>Phone: {COMPANY_PHONE} | Mob: {COMPANY_MOBILE}</small>
@@ -1845,7 +1911,8 @@ function BillPreview({ bill }) {
       <div className="seller-bill-meta">
         <span><b>Bill No</b>{bill.billNumber}</span>
         <span><b>Date</b>{bill.date}</span>
-        {bill.irn ? <span><b>IRN</b>{bill.irn}</span> : <span><b>Invoice Status</b>{bill.documentType === "tax" ? "IRN required" : "Retail bill"}</span>}
+        <span><b>Supply Type</b>{bill.supplyType || (bill.documentType === "tax" ? "B2B" : "B2C")}</span>
+        {bill.irn ? <span><b>IRN</b>{bill.irn}</span> : null}
         {bill.ackNo ? <span><b>Ack No.</b>{bill.ackNo}</span> : null}
         {bill.ackDate ? <span><b>Ack Date</b>{bill.ackDate}</span> : null}
         {bill.ewayBillNo ? <span><b>e-Way Bill No.</b>{bill.ewayBillNo}</span> : null}
@@ -1865,16 +1932,17 @@ function BillPreview({ bill }) {
           <div className="data-row" key={item.id}>
             <span>{item.name}</span>
             <span>{item.hsn}</span>
-            <span>{stockAmount(item.quantity)} {item.unit}</span>
+            <span>{stockAmount(item.quantity)} {item.unit}{item.quantityKg !== null && item.quantityKg !== undefined ? ` (${stockAmount(item.quantityKg)} kg)` : ""}</span>
             <span>{money(item.rate)}</span>
             <span>{money(item.amount)}</span>
           </div>
         ))}
       </div>
       <div className="seller-tax-summary">
-        <span><b>Subtotal</b>{money(bill.subtotal || bill.total)}</span>
-        <span><b>CGST</b>{money(bill.cgst || 0)}</span>
-        <span><b>SGST</b>{money(bill.sgst || 0)}</span>
+        <span><b>Taxable Amount</b>{money(bill.taxableAmount ?? bill.subtotal ?? bill.total)}</span>
+        {(bill.taxType ? bill.taxType === "INTRASTATE" : !bill.igst) ? <><span><b>CGST ({Number(bill.taxPercent || 0) / 2}%)</b>{money(bill.cgst || 0)}</span><span><b>SGST ({Number(bill.taxPercent || 0) / 2}%)</b>{money(bill.sgst || 0)}</span></> : <span><b>IGST ({bill.taxPercent || 0}%)</b>{money(bill.igst || 0)}</span>}
+        <span><b>Tax Amount</b>{money(bill.taxAmount ?? ((bill.cgst || 0) + (bill.sgst || 0) + (bill.igst || 0)))}</span>
+        {bill.roundOff ? <span><b>Round Off</b>{money(bill.roundOff)}</span> : null}
       </div>
       {bill.signedQr ? <p className="seller-qr-text"><b>Signed QR:</b> {bill.signedQr}</p> : null}
       <footer>
