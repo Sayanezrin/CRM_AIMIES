@@ -2051,13 +2051,14 @@ function StockPage({ store, commit }) {
   const stock = normalizeStock(store.stock);
   const [topUp, setTopUp] = useState({ material: "oil", quantity: "", note: "" });
   const [finishedTopUp, setFinishedTopUp] = useState({ stockKey: oilPackConversions[0].id, quantity: "", unit: "box", note: "" });
-  const [dispatch, setDispatch] = useState({ product: "p2l", cases: "1", location: "" });
+  const [dispatch, setDispatch] = useState({ product: oilPackConversions[0].id, cases: "1", location: "" });
   const selectedFinishedPack = oilPackConversionMap[finishedTopUp.stockKey] || oilPackConversions[0];
   const finishedConversion = oilQuantityConversion(selectedFinishedPack, finishedTopUp.quantity, finishedTopUp.unit);
-  const selectedProduct = stockProducts.find((product) => product.id === dispatch.product) || stockProducts[0];
+  const selectedProduct = oilPackConversionMap[dispatch.product] || oilPackConversions[0];
   const dispatchCases = Math.max(0, parseInt(dispatch.cases, 10) || 0);
-  const dispatchDraw = productCaseDraw(selectedProduct);
-  const dispatchShortage = Object.entries(dispatchDraw).filter(([material, amount]) => amount * dispatchCases > Number(stock.levels[material] || 0));
+  const dispatchPieces = dispatchCases * selectedProduct.piecesPerBox;
+  const dispatchKg = dispatchPieces * selectedProduct.kgPerPiece;
+  const dispatchShortage = dispatchPieces > Number(stock.finishedGoods[selectedProduct.id] || 0);
   const stockUpdates = stock.movements.filter((movement) => movement.type === "Stock Updated");
   const finishedStockUpdates = stock.movements.filter((movement) => movement.type === "Finished Goods Updated");
   const billingSales = stock.movements.filter((movement) => movement.type === "Billing Sale");
@@ -2123,27 +2124,24 @@ function StockPage({ store, commit }) {
       toast("Enter sold/exported case count.", "error");
       return;
     }
-    if (dispatchShortage.length) {
-      toast("Not enough raw materials for this dispatch.", "error");
+    if (dispatchShortage) {
+      toast(`Not enough ${selectedProduct.name} finished stock for this dispatch.`, "error");
       return;
     }
     commitStock((current) => {
-      const nextLevels = { ...current.levels };
       const nextFinishedGoods = { ...current.finishedGoods };
-      for (const [material, amount] of Object.entries(dispatchDraw)) {
-        nextLevels[material] = Number(nextLevels[material] || 0) - amount * dispatchCases;
-      }
+      nextFinishedGoods[selectedProduct.id] = Number(nextFinishedGoods[selectedProduct.id] || 0) - dispatchPieces;
       return {
         ...current,
-        levels: nextLevels,
+        finishedGoods: nextFinishedGoods,
         movements: [
-          { id: uid("DSP"), type: "Dispatch", date: today(), productId: selectedProduct.id, item: selectedProduct.name, quantity: dispatchCases, unit: "cases", note: dispatch.location || "Export dispatch" },
+          { id: uid("DSP"), type: "Dispatch", date: today(), stockKey: selectedProduct.id, item: selectedProduct.name, quantity: dispatchCases, unit: "boxes", pieces: dispatchPieces, kg: dispatchKg, note: dispatch.location || "Export dispatch" },
           ...current.movements
         ]
       };
     });
     setDispatch({ ...dispatch, cases: "1", location: "" });
-    toast(`${dispatchCases} case${dispatchCases > 1 ? "s" : ""} dispatched and stock deducted.`);
+    toast(`${dispatchCases} box${dispatchCases > 1 ? "es" : ""} dispatched and finished stock deducted.`);
   };
 
   const deleteMovement = (movement) => {
@@ -2151,16 +2149,22 @@ function StockPage({ store, commit }) {
     if (!confirmed) return;
     commitStock((current) => {
       const nextLevels = { ...current.levels };
+      const nextFinishedGoods = { ...current.finishedGoods };
       if (movement.type === "Stock Updated") {
         const materialId = movement.materialId || stockMaterials.find((material) => material.name === movement.item)?.id;
         if (materialId) nextLevels[materialId] = Number(nextLevels[materialId] || 0) - Number(movement.quantity || 0);
       }
       if (movement.type === "Dispatch") {
-        const product = stockProducts.find((item) => item.id === movement.productId || item.name === movement.item);
-        if (product) {
-          const draw = productCaseDraw(product);
-          for (const [material, amount] of Object.entries(draw)) {
-            nextLevels[material] = Number(nextLevels[material] || 0) + amount * Number(movement.quantity || 0);
+        const stockKey = movement.stockKey || movement.productId;
+        if (stockKey && oilPackConversionMap[stockKey]) {
+          nextFinishedGoods[stockKey] = Number(nextFinishedGoods[stockKey] || 0) + Number(movement.pieces || 0);
+        } else {
+          const legacyProduct = stockProducts.find((item) => item.id === movement.productId || item.name === movement.item);
+          if (legacyProduct) {
+            const legacyDraw = productCaseDraw(legacyProduct);
+            for (const [material, amount] of Object.entries(legacyDraw)) {
+              nextLevels[material] = Number(nextLevels[material] || 0) + amount * Number(movement.quantity || 0);
+            }
           }
         }
       }
@@ -2223,46 +2227,43 @@ function StockPage({ store, commit }) {
         </form>
       </Panel>
 
-      <Panel title="Record Sold / Exported Cases">
+      <Panel title="Record Sold / Exported Boxes">
         <form className="stock-form" onSubmit={recordDispatch}>
           <label>Pack
             <select value={dispatch.product} onChange={(event) => setDispatch({ ...dispatch, product: event.target.value })}>
-              {stockProducts.map((product) => <option key={product.id} value={product.id}>{product.name} - {product.piecesPerCase} pcs/case</option>)}
+              {oilPackConversions.map((product) => <option key={product.id} value={product.id}>{product.name} - {product.piecesPerBox} pcs/box</option>)}
             </select>
           </label>
-          <label>Cases Sold
+          <label>Boxes Sold
             <input type="number" min="1" value={dispatch.cases} onChange={(event) => setDispatch({ ...dispatch, cases: event.target.value })} />
           </label>
           <label>Location
             <input value={dispatch.location} onChange={(event) => setDispatch({ ...dispatch, location: event.target.value })} placeholder="Kerala / export location" />
           </label>
-          <button className="primary-button" type="submit" disabled={Boolean(dispatchShortage.length)}>Dispatch</button>
+          <button className="primary-button" type="submit" disabled={dispatchShortage}>Dispatch</button>
         </form>
         <div className="stock-deduction">
-          <strong>Raw material deduction for {dispatchCases || 0} case{dispatchCases === 1 ? "" : "s"}</strong>
-          {Object.entries(dispatchDraw).map(([material, amount]) => {
-            const required = amount * dispatchCases;
-            const available = Number(stock.levels[material] || 0);
-            return (
-              <span className={required > available ? "short" : ""} key={material}>
-                {stockMaterialMap[material].name}: {stockAmount(required)} / available {stockAmount(available)}
-              </span>
-            );
-          })}
+          <strong>Finished-goods deduction for {dispatchCases || 0} box{dispatchCases === 1 ? "" : "es"}</strong>
+          <span className={dispatchShortage ? "short" : ""}>
+            {selectedProduct.name}: {stockAmount(dispatchPieces)} pieces / {stockAmount(dispatchKg)} kg required; {stockAmount(stock.finishedGoods[selectedProduct.id] || 0)} pieces available
+          </span>
         </div>
       </Panel>
 
-      <Panel title="Production Capacity" className="full-row-panel">
+      <Panel title="Finished Goods Capacity" className="full-row-panel">
         <div className="stock-capacity-grid">
-          {stockProducts.map((product) => {
-            const capacity = productionCapacity(product, stock.levels);
+          {oilPackConversions.map((product) => {
+            const availablePieces = Math.max(0, Number(stock.finishedGoods[product.id] || 0));
+            const completeBoxes = Math.floor(availablePieces / product.piecesPerBox);
+            const loosePieces = availablePieces - completeBoxes * product.piecesPerBox;
+            const totalKg = availablePieces * product.kgPerPiece;
             return (
               <article className="stock-capacity-card" key={product.id}>
-                <span>{product.piecesPerCase} pcs / case</span>
+                <span>{product.piecesPerBox} pcs / box · {product.kgPerBox.toFixed(3)} kg / box</span>
                 <strong>{product.name}</strong>
-                <b>{stockAmount(capacity.cases)} cases</b>
-                <small>{stockAmount(capacity.pieces)} pieces can be produced</small>
-                <em>Limited by {stockMaterialMap[capacity.limiting]?.name || "stock"}</em>
+                <b>{stockAmount(completeBoxes)} boxes</b>
+                <small>{stockAmount(availablePieces)} pieces available{loosePieces ? ` (${stockAmount(loosePieces)} loose)` : ""}</small>
+                <em>{stockAmount(totalKg)} kg total stock</em>
               </article>
             );
           })}
