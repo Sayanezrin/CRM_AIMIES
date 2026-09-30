@@ -306,34 +306,57 @@ const stockProducts = [
   { id: "p5l", name: "5 L Can", piecesPerCase: 4, drawPerPiece: { oil: 5, can5l: 1, sticker5l: 1, canCap: 1, band: 1 }, drawPerCase: { plastic: 1, box5l: 1 } },
   { id: "p15kg", name: "15 kg Can", piecesPerCase: 1, drawPerPiece: { oil: 16.3, can15kg: 1, sticker15kg: 1, canCap: 1, band: 1 }, drawPerCase: { plastic: 1, box15kg: 1 } }
 ];
+const oilPackConversions = [
+  { id: "pouch-1l", name: "Pouch 1 Ltr", kgPerPiece: 0.91, piecesPerBox: 10 },
+  { id: "pouch-half-ltr", name: "Pouch 1/2 Ltr", kgPerPiece: 0.455, piecesPerBox: 20 },
+  { id: "bottle-1l", name: "Bottle 1 Ltr", kgPerPiece: 0.91, piecesPerBox: 12 },
+  { id: "bottle-half-ltr", name: "Bottle 1/2 Ltr", kgPerPiece: 0.455, piecesPerBox: 24 },
+  { id: "bottle-910ml", name: "Bottle 910 ML", kgPerPiece: 0.828, piecesPerBox: 12 },
+  { id: "bottle-455ml", name: "Bottle 455 ML", kgPerPiece: 0.414, piecesPerBox: 24 },
+  { id: "yellow-bottle-2l", name: "Yellow Bottle 2 Ltr", kgPerPiece: 1.82, piecesPerBox: 6 },
+  { id: "yellow-bottle-5l", name: "Yellow Bottle 5 Ltr", kgPerPiece: 4.55, piecesPerBox: 4 },
+  { id: "pouch-800g", name: "Pouch 800 Gm", kgPerPiece: 0.8, piecesPerBox: 10 },
+  { id: "pouch-400g", name: "Pouch 400 Gm", kgPerPiece: 0.4, piecesPerBox: 20 },
+  { id: "jar-15kg", name: "Jar 15 Kg", kgPerPiece: 15, piecesPerBox: 1 },
+  { id: "bottle-900ml", name: "Bottle 900 ML", kgPerPiece: 0.819, piecesPerBox: 12 },
+  { id: "bottle-450ml", name: "Bottle 450 ML", kgPerPiece: 0.41, piecesPerBox: 24 }
+].map((item) => ({ ...item, kgPerBox: item.kgPerPiece * item.piecesPerBox }));
+const oilPackConversionMap = Object.fromEntries(oilPackConversions.map((item) => [item.id, item]));
 const sellerOilItems = [
-  { id: "oil-half-bottle-box", name: "Aimies Coconut Oil 1/2 Ltr Bottle - (Box)", unit: "box", hsn: "15131900" },
-  { id: "oil-half-bottle-piece", name: "Aimies Coconut Oil 1/2 Ltr Bottle - Piece", unit: "piece", hsn: "15131900" },
-  { id: "oil1l", name: "Aimies Coconut Oil 1 Ltr Bottle - (Box)", unit: "box", hsn: "15131900" },
-  { id: "oil-1l-bottle-piece", name: "Aimies Coconut Oil 1 Ltr Bottle - Piece", unit: "piece", hsn: "15131900" },
-  { id: "oil-half-pouch-box", name: "Aimies Coconut Oil 1/2 Ltr Pouch - (Box)", unit: "box", hsn: "15131900" },
-  { id: "oil-half-pouch-piece", name: "Aimies Coconut Oil 1/2 Ltr Pouch - Piece", unit: "piece", hsn: "15131900" },
-  { id: "oil-1l-pouch-box", name: "Aimies Coconut Oil 1 Ltr Pouch - (Box)", unit: "box", hsn: "15131900" },
-  { id: "oil-1l-pouch-piece", name: "Aimies Coconut Oil 1 Ltr Pouch - Piece", unit: "piece", hsn: "15131900" },
-  { id: "oil-400g-pouch-box", name: "Aimies Coconut Oil 400 GM Pouch - (Box)", unit: "box", hsn: "15131900" },
-  { id: "oil-400g-pouch-piece", name: "Aimies Coconut Oil 400 GM Pouch - (Piece)", unit: "piece", hsn: "15131900" },
-  { id: "oil-455ml-bottle-box", name: "Aimies Coconut Oil 455 ML Bottle Box", unit: "box", hsn: "15131900" },
-  { id: "oil-455ml-bottle-piece", name: "Aimies Coconut Oil 455 ML Bottle Piece", unit: "piece", hsn: "15131900" },
-  { id: "oil-800g-pouch-box", name: "Aimies Coconut Oil 800 GM Pouch - (Box)", unit: "box", hsn: "15131900" },
-  { id: "oil-800g-pouch-piece", name: "Aimies Coconut Oil 800 GM Pouch - (Piece)", unit: "piece", hsn: "15131900" },
-  { id: "oil-910ml-bottle-box", name: "Aimies Coconut Oil 910 ML Bottle Box", unit: "box", hsn: "15131900" },
-  { id: "oil-910ml-bottle-piece", name: "Aimies Coconut Oil 910 ML Bottle Piece", unit: "piece", hsn: "15131900" },
+  { id: "oil-half-bottle-box", name: "Aimies Coconut Oil 1/2 Ltr Bottle - (Box)", unit: "box", stockKey: "bottle-half-ltr", hsn: "15131900" },
+  { id: "oil-half-bottle-piece", name: "Aimies Coconut Oil 1/2 Ltr Bottle - Piece", unit: "piece", stockKey: "bottle-half-ltr", hsn: "15131900" },
+  { id: "oil1l", name: "Aimies Coconut Oil 1 Ltr Bottle - (Box)", unit: "box", stockKey: "bottle-1l", hsn: "15131900" },
+  { id: "oil-1l-bottle-piece", name: "Aimies Coconut Oil 1 Ltr Bottle - Piece", unit: "piece", stockKey: "bottle-1l", hsn: "15131900" },
+  { id: "oil-half-pouch-box", name: "Aimies Coconut Oil 1/2 Ltr Pouch - (Box)", unit: "box", stockKey: "pouch-half-ltr", hsn: "15131900" },
+  { id: "oil-half-pouch-piece", name: "Aimies Coconut Oil 1/2 Ltr Pouch - Piece", unit: "piece", stockKey: "pouch-half-ltr", hsn: "15131900" },
+  { id: "oil-1l-pouch-box", name: "Aimies Coconut Oil 1 Ltr Pouch - (Box)", unit: "box", stockKey: "pouch-1l", hsn: "15131900" },
+  { id: "oil-1l-pouch-piece", name: "Aimies Coconut Oil 1 Ltr Pouch - Piece", unit: "piece", stockKey: "pouch-1l", hsn: "15131900" },
+  { id: "oil-400g-pouch-box", name: "Aimies Coconut Oil 400 GM Pouch - (Box)", unit: "box", stockKey: "pouch-400g", hsn: "15131900" },
+  { id: "oil-400g-pouch-piece", name: "Aimies Coconut Oil 400 GM Pouch - (Piece)", unit: "piece", stockKey: "pouch-400g", hsn: "15131900" },
+  { id: "oil-455ml-bottle-box", name: "Aimies Coconut Oil 455 ML Bottle Box", unit: "box", stockKey: "bottle-455ml", hsn: "15131900" },
+  { id: "oil-455ml-bottle-piece", name: "Aimies Coconut Oil 455 ML Bottle Piece", unit: "piece", stockKey: "bottle-455ml", hsn: "15131900" },
+  { id: "oil-800g-pouch-box", name: "Aimies Coconut Oil 800 GM Pouch - (Box)", unit: "box", stockKey: "pouch-800g", hsn: "15131900" },
+  { id: "oil-800g-pouch-piece", name: "Aimies Coconut Oil 800 GM Pouch - (Piece)", unit: "piece", stockKey: "pouch-800g", hsn: "15131900" },
+  { id: "oil-910ml-bottle-box", name: "Aimies Coconut Oil 910 ML Bottle Box", unit: "box", stockKey: "bottle-910ml", hsn: "15131900" },
+  { id: "oil-910ml-bottle-piece", name: "Aimies Coconut Oil 910 ML Bottle Piece", unit: "piece", stockKey: "bottle-910ml", hsn: "15131900" },
   { id: "oil-2l-bottle-box", name: "Aimies Coconut Oil 2 Ltr Bottle - Box", unit: "box", hsn: "15131900" },
   { id: "oil2l", name: "Aimies Coconut Oil 2 Ltr Bottle Piece", unit: "piece", hsn: "15131900" },
   { id: "oil-5l-jar-box", name: "Aimies Coconut Oil Jar 5 Ltr Box", unit: "box", hsn: "15131900" },
   { id: "oil-5l-jar-piece", name: "Aimies Coconut Oil Jar 5 Ltr Piece", unit: "piece", hsn: "15131900" },
-  { id: "oil-15kg-jar", name: "Aimies Coconut Oil Jar 15 KG", unit: "piece", hsn: "15131900" },
-  { id: "coconut-oil-15kg-jar", name: "Coconut Oil Jar 15 Kg", unit: "piece", hsn: "15131900" },
+  { id: "oil-15kg-jar", name: "Aimies Coconut Oil Jar 15 KG", unit: "piece", stockKey: "jar-15kg", hsn: "15131900" },
+  { id: "coconut-oil-15kg-jar", name: "Coconut Oil Jar 15 Kg", unit: "piece", stockKey: "jar-15kg", hsn: "15131900" },
   { id: "oil-yellow-1l-box", name: "Aimies Coconut Oil Yellow Bottle 1 Ltr Box", unit: "box", hsn: "15131900" },
   { id: "oil-yellow-1l-piece", name: "Aimies Coconut Oil Yellow Bottle 1 Ltr Piece", unit: "piece", hsn: "15131900" },
-  { id: "oil-yellow-2l-piece", name: "Aimies Coconut Oil Yellow Bottle 2 Ltr Piece", unit: "piece", hsn: "15131900" },
-  { id: "coconut-oil", name: "Coconut Oil", unit: "litre", hsn: "15131900" },
-  { id: "aimies-coconut-oil", name: "Aimies Coconut Oil", unit: "litre", hsn: "15131900" },
+  { id: "oil-yellow-2l-box", name: "Aimies Coconut Oil Yellow Bottle 2 Ltr Box", unit: "box", stockKey: "yellow-bottle-2l", hsn: "15131900" },
+  { id: "oil-yellow-2l-piece", name: "Aimies Coconut Oil Yellow Bottle 2 Ltr Piece", unit: "piece", stockKey: "yellow-bottle-2l", hsn: "15131900" },
+  { id: "oil-yellow-5l-box", name: "Aimies Coconut Oil Yellow Bottle 5 Ltr Box", unit: "box", stockKey: "yellow-bottle-5l", hsn: "15131900" },
+  { id: "oil-yellow-5l-piece", name: "Aimies Coconut Oil Yellow Bottle 5 Ltr Piece", unit: "piece", stockKey: "yellow-bottle-5l", hsn: "15131900" },
+  { id: "oil-900ml-bottle-box", name: "Aimies Coconut Oil 900 ML Bottle Box", unit: "box", stockKey: "bottle-900ml", hsn: "15131900" },
+  { id: "oil-900ml-bottle-piece", name: "Aimies Coconut Oil 900 ML Bottle Piece", unit: "piece", stockKey: "bottle-900ml", hsn: "15131900" },
+  { id: "oil-450ml-bottle-box", name: "Aimies Coconut Oil 450 ML Bottle Box", unit: "box", stockKey: "bottle-450ml", hsn: "15131900" },
+  { id: "oil-450ml-bottle-piece", name: "Aimies Coconut Oil 450 ML Bottle Piece", unit: "piece", stockKey: "bottle-450ml", hsn: "15131900" },
+  { id: "coconut-oil", name: "Coconut Oil", unit: "litre", rawMaterialId: "oil", hsn: "15131900" },
+  { id: "aimies-coconut-oil", name: "Aimies Coconut Oil", unit: "litre", rawMaterialId: "oil", hsn: "15131900" },
   { id: "custom", name: "Custom Oil Item", unit: "item", hsn: "15131900" }
 ];
 const indianStates = [
@@ -352,12 +375,23 @@ const stateCodeByName = Object.fromEntries(indianStates.map((state) => [state.na
 const GST_RATES = [0, 5, 18];
 const LITRE_TO_KG = 0.91;
 const initialStockLevels = Object.fromEntries(stockMaterials.map((material) => [material.id, 0]));
+const initialFinishedGoods = Object.fromEntries(oilPackConversions.map((item) => [item.id, 0]));
 
 function normalizeStock(stock = {}) {
   return {
     levels: { ...initialStockLevels, ...(stock.levels || {}) },
+    finishedGoods: { ...initialFinishedGoods, ...(stock.finishedGoods || {}) },
     movements: Array.isArray(stock.movements) ? stock.movements : []
   };
+}
+
+function oilQuantityConversion(pack, quantity, unit) {
+  const numericQuantity = Math.max(0, Number(quantity || 0));
+  if (!pack) return { pieces: 0, kg: unit === "litre" ? numericQuantity * LITRE_TO_KG : unit === "kg" ? numericQuantity : 0 };
+  if (unit === "box") return { pieces: numericQuantity * pack.piecesPerBox, kg: numericQuantity * pack.kgPerBox };
+  if (unit === "litre") return { pieces: numericQuantity * LITRE_TO_KG / pack.kgPerPiece, kg: numericQuantity * LITRE_TO_KG };
+  if (unit === "kg") return { pieces: numericQuantity / pack.kgPerPiece, kg: numericQuantity };
+  return { pieces: numericQuantity, kg: numericQuantity * pack.kgPerPiece };
 }
 
 function productCaseDraw(product) {
@@ -1313,6 +1347,9 @@ function SellerBillingPage({ store, commit, session }) {
   const latestBill = bills[0] || null;
   const previewBill = printTargetBill || latestBill;
   const selectedItem = sellerOilItems.find((item) => item.id === line.product) || sellerOilItems[0];
+  const selectedPack = oilPackConversionMap[selectedItem.stockKey];
+  const lineConversion = oilQuantityConversion(selectedPack, line.quantity, line.quantityUnit);
+  const stock = normalizeStock(store.stock);
   const billSubtotal = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const taxPercent = Math.max(0, Number(billInfo.taxPercent || 0));
   const taxAmount = billSubtotal * taxPercent / 100;
@@ -1343,7 +1380,11 @@ function SellerBillingPage({ store, commit, session }) {
         hsn: selectedItem.hsn,
         quantity,
         unit: line.quantityUnit,
-        quantityKg: line.quantityUnit === "litre" ? quantity * LITRE_TO_KG : line.quantityUnit === "kg" ? quantity : null,
+        stockKey: selectedItem.stockKey || null,
+        rawMaterialId: selectedItem.rawMaterialId || null,
+        quantityPieces: selectedItem.stockKey ? lineConversion.pieces : null,
+        quantityLitres: selectedItem.rawMaterialId ? (line.quantityUnit === "kg" ? quantity / LITRE_TO_KG : quantity) : null,
+        quantityKg: lineConversion.kg || null,
         rate: amount / quantity,
         amount
       }
@@ -1374,6 +1415,22 @@ function SellerBillingPage({ store, commit, session }) {
     }
     if (!items.length) {
       toast("Add at least one oil item before generating bill.", "error");
+      return;
+    }
+    const stockRequired = items.reduce((required, item) => {
+      if (item.stockKey) required[item.stockKey] = Number(required[item.stockKey] || 0) + Number(item.quantityPieces || 0);
+      return required;
+    }, {});
+    const insufficientItem = Object.entries(stockRequired).find(([stockKey, pieces]) => pieces > Number(stock.finishedGoods[stockKey] || 0) + 0.000001);
+    if (insufficientItem) {
+      const [stockKey, pieces] = insufficientItem;
+      const available = Number(stock.finishedGoods[stockKey] || 0);
+      toast(`Not enough ${oilPackConversionMap[stockKey]?.name || "item"} stock. Required ${stockAmount(pieces)} pieces; available ${stockAmount(available)}.`, "error");
+      return;
+    }
+    const rawOilRequired = items.reduce((total, item) => total + Number(item.quantityLitres || 0), 0);
+    if (rawOilRequired > Number(stock.levels.oil || 0) + 0.000001) {
+      toast(`Not enough bulk coconut oil stock. Required ${stockAmount(rawOilRequired)} L; available ${stockAmount(stock.levels.oil || 0)} L.`, "error");
       return;
     }
 
@@ -1429,9 +1486,29 @@ function SellerBillingPage({ store, commit, session }) {
         totalBills: currentCustomers.find((item) => item.phone === customerPhone)?.totalBills || 0
       };
       nextCustomer.totalBills += 1;
+      const currentStock = normalizeStock(current.stock);
+      const nextLevels = { ...currentStock.levels };
+      const nextFinishedGoods = { ...currentStock.finishedGoods };
+      const saleMovements = bill.items.filter((item) => item.stockKey).map((item, index) => {
+        nextFinishedGoods[item.stockKey] = Number(nextFinishedGoods[item.stockKey] || 0) - Number(item.quantityPieces || 0);
+        return {
+          id: `${uid("SALE")}-${index}`, type: "Billing Sale", date: today(), stockKey: item.stockKey, billNumber: bill.billNumber,
+          item: item.name, quantity: item.quantity, unit: item.unit, pieces: item.quantityPieces, kg: item.quantityKg,
+          note: `${bill.billNumber} - ${customerName}`
+        };
+      });
+      const rawSaleMovements = bill.items.filter((item) => item.rawMaterialId).map((item, index) => {
+        nextLevels[item.rawMaterialId] = Number(nextLevels[item.rawMaterialId] || 0) - Number(item.quantityLitres || 0);
+        return {
+          id: `${uid("SALE-RAW")}-${index}`, type: "Billing Sale", date: today(), rawMaterialId: item.rawMaterialId, billNumber: bill.billNumber,
+          item: item.name, quantity: item.quantity, unit: item.unit, litres: item.quantityLitres, kg: item.quantityKg,
+          note: `${bill.billNumber} - ${customerName}`
+        };
+      });
       return {
         ...current,
         sellerBills: [bill, ...(current.sellerBills || [])],
+        stock: { ...currentStock, levels: nextLevels, finishedGoods: nextFinishedGoods, movements: [...saleMovements, ...rawSaleMovements, ...currentStock.movements] },
         sellerCustomers: [
           nextCustomer,
           ...currentCustomers.filter((item) => item.phone !== customerPhone)
@@ -1476,11 +1553,28 @@ function SellerBillingPage({ store, commit, session }) {
   const deleteBill = (billId) => {
     const confirmed = window.confirm("Delete this bill from history?");
     if (!confirmed) return;
-    commit((current) => ({
-      ...current,
-      sellerBills: (current.sellerBills || []).filter((bill) => bill.id !== billId)
-    }));
-    toast("Bill deleted.");
+    commit((current) => {
+      const deletedBill = (current.sellerBills || []).find((bill) => bill.id === billId);
+      const currentStock = normalizeStock(current.stock);
+      const nextLevels = { ...currentStock.levels };
+      const nextFinishedGoods = { ...currentStock.finishedGoods };
+      const saleMovements = currentStock.movements.filter((movement) => movement.type === "Billing Sale" && movement.billNumber === deletedBill?.billNumber);
+      saleMovements.forEach((movement) => {
+        if (movement.stockKey) nextFinishedGoods[movement.stockKey] = Number(nextFinishedGoods[movement.stockKey] || 0) + Number(movement.pieces || 0);
+        if (movement.rawMaterialId) nextLevels[movement.rawMaterialId] = Number(nextLevels[movement.rawMaterialId] || 0) + Number(movement.litres || 0);
+      });
+      return {
+        ...current,
+        sellerBills: (current.sellerBills || []).filter((bill) => bill.id !== billId),
+        stock: {
+          ...currentStock,
+          levels: nextLevels,
+          finishedGoods: nextFinishedGoods,
+          movements: currentStock.movements.filter((movement) => !(movement.type === "Billing Sale" && movement.billNumber === deletedBill?.billNumber))
+        }
+      };
+    });
+    toast("Bill deleted and its finished-goods stock restored.");
   };
 
   return (
@@ -1559,7 +1653,7 @@ function SellerBillingPage({ store, commit, session }) {
               {[selectedItem.unit, "litre", "kg"].filter((unit, index, all) => all.indexOf(unit) === index).map((unit) => <option key={unit} value={unit}>{unit}</option>)}
             </select>
           </label>
-          {line.quantityUnit === "litre" ? <label>Quantity in KG<input value={(Number(line.quantity || 0) * LITRE_TO_KG).toFixed(3)} readOnly /></label> : null}
+          <label>Converted Stock Quantity<input value={`${lineConversion.kg.toFixed(3)} kg${selectedPack ? ` / ${lineConversion.pieces.toFixed(3)} pieces` : ""}`} readOnly /></label>
           <label>Manual Amount<input type="number" min="0" step="0.01" value={line.amount} onChange={(event) => setLine({ ...line, amount: event.target.value })} placeholder="Amount collected" /></label>
           <button className="primary-button" type="submit">Add Item</button>
         </form>
@@ -1956,12 +2050,17 @@ function BillPreview({ bill }) {
 function StockPage({ store, commit }) {
   const stock = normalizeStock(store.stock);
   const [topUp, setTopUp] = useState({ material: "oil", quantity: "", note: "" });
+  const [finishedTopUp, setFinishedTopUp] = useState({ stockKey: oilPackConversions[0].id, quantity: "", unit: "box", note: "" });
   const [dispatch, setDispatch] = useState({ product: "p2l", cases: "1", location: "" });
+  const selectedFinishedPack = oilPackConversionMap[finishedTopUp.stockKey] || oilPackConversions[0];
+  const finishedConversion = oilQuantityConversion(selectedFinishedPack, finishedTopUp.quantity, finishedTopUp.unit);
   const selectedProduct = stockProducts.find((product) => product.id === dispatch.product) || stockProducts[0];
   const dispatchCases = Math.max(0, parseInt(dispatch.cases, 10) || 0);
   const dispatchDraw = productCaseDraw(selectedProduct);
   const dispatchShortage = Object.entries(dispatchDraw).filter(([material, amount]) => amount * dispatchCases > Number(stock.levels[material] || 0));
   const stockUpdates = stock.movements.filter((movement) => movement.type === "Stock Updated");
+  const finishedStockUpdates = stock.movements.filter((movement) => movement.type === "Finished Goods Updated");
+  const billingSales = stock.movements.filter((movement) => movement.type === "Billing Sale");
   const dispatches = stock.movements.filter((movement) => movement.type === "Dispatch");
 
   const commitStock = (updater) => {
@@ -1992,6 +2091,32 @@ function StockPage({ store, commit }) {
     toast(`${material.name} stock updated.`);
   };
 
+  const addFinishedGoodsStock = (event) => {
+    event.preventDefault();
+    const quantity = Number(finishedTopUp.quantity);
+    if (!quantity || quantity <= 0 || !finishedConversion.pieces) {
+      toast("Enter a valid finished-goods quantity.", "error");
+      return;
+    }
+    commitStock((current) => ({
+      ...current,
+      finishedGoods: {
+        ...current.finishedGoods,
+        [selectedFinishedPack.id]: Number(current.finishedGoods[selectedFinishedPack.id] || 0) + finishedConversion.pieces
+      },
+      movements: [
+        {
+          id: uid("FG"), type: "Finished Goods Updated", date: today(), stockKey: selectedFinishedPack.id,
+          item: selectedFinishedPack.name, quantity, unit: finishedTopUp.unit, pieces: finishedConversion.pieces,
+          kg: finishedConversion.kg, note: finishedTopUp.note || "Finished goods stock update"
+        },
+        ...current.movements
+      ]
+    }));
+    setFinishedTopUp({ ...finishedTopUp, quantity: "", note: "" });
+    toast(`${selectedFinishedPack.name} stock increased by ${stockAmount(finishedConversion.pieces)} pieces (${stockAmount(finishedConversion.kg)} kg).`);
+  };
+
   const recordDispatch = (event) => {
     event.preventDefault();
     if (!dispatchCases) {
@@ -2004,6 +2129,7 @@ function StockPage({ store, commit }) {
     }
     commitStock((current) => {
       const nextLevels = { ...current.levels };
+      const nextFinishedGoods = { ...current.finishedGoods };
       for (const [material, amount] of Object.entries(dispatchDraw)) {
         nextLevels[material] = Number(nextLevels[material] || 0) - amount * dispatchCases;
       }
@@ -2038,9 +2164,19 @@ function StockPage({ store, commit }) {
           }
         }
       }
+      if (movement.type === "Finished Goods Updated" && movement.stockKey) {
+        nextFinishedGoods[movement.stockKey] = Number(nextFinishedGoods[movement.stockKey] || 0) - Number(movement.pieces || 0);
+      }
+      if (movement.type === "Billing Sale" && movement.stockKey) {
+        nextFinishedGoods[movement.stockKey] = Number(nextFinishedGoods[movement.stockKey] || 0) + Number(movement.pieces || 0);
+      }
+      if (movement.type === "Billing Sale" && movement.rawMaterialId) {
+        nextLevels[movement.rawMaterialId] = Number(nextLevels[movement.rawMaterialId] || 0) + Number(movement.litres || 0);
+      }
       return {
         ...current,
         levels: nextLevels,
+        finishedGoods: nextFinishedGoods,
         movements: current.movements.filter((item) => item.id !== movement.id)
       };
     });
@@ -2063,6 +2199,27 @@ function StockPage({ store, commit }) {
             <input value={topUp.note} onChange={(event) => setTopUp({ ...topUp, note: event.target.value })} placeholder="Monthly stock update" />
           </label>
           <button className="primary-button" type="submit">Add Stock</button>
+        </form>
+      </Panel>
+
+      <Panel title="Finished Coconut Oil Stock">
+        <form className="stock-form" onSubmit={addFinishedGoodsStock}>
+          <label>Item
+            <select value={finishedTopUp.stockKey} onChange={(event) => setFinishedTopUp({ ...finishedTopUp, stockKey: event.target.value })}>
+              {oilPackConversions.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+            </select>
+          </label>
+          <label>Quantity
+            <input type="number" min="0" step="0.001" value={finishedTopUp.quantity} onChange={(event) => setFinishedTopUp({ ...finishedTopUp, quantity: event.target.value })} placeholder="0" />
+          </label>
+          <label>Unit
+            <select value={finishedTopUp.unit} onChange={(event) => setFinishedTopUp({ ...finishedTopUp, unit: event.target.value })}>
+              <option value="box">Box</option><option value="piece">Piece</option><option value="litre">Litre</option><option value="kg">KG</option>
+            </select>
+          </label>
+          <label>Converted Quantity<input value={`${finishedConversion.pieces.toFixed(3)} pieces / ${finishedConversion.kg.toFixed(3)} kg`} readOnly /></label>
+          <label>Note<input value={finishedTopUp.note} onChange={(event) => setFinishedTopUp({ ...finishedTopUp, note: event.target.value })} placeholder="Production / opening stock" /></label>
+          <button className="primary-button" type="submit">Add Finished Stock</button>
         </form>
       </Panel>
 
@@ -2127,10 +2284,25 @@ function StockPage({ store, commit }) {
         </div>
       </Panel>
 
+      <Panel title="Finished Coconut Oil Inventory" className="full-row-panel">
+        <div className="data-table finished-stock-table">
+          <div className="data-head"><span>Item</span><span>KG / Piece</span><span>Pieces / Box</span><span>KG / Box</span><span>Available Pieces</span><span>Available Boxes</span><span>Total KG</span></div>
+          {oilPackConversions.map((item) => {
+            const pieces = Number(stock.finishedGoods[item.id] || 0);
+            return <div className="data-row" key={item.id}>
+              <span>{item.name}</span><span>{item.kgPerPiece.toFixed(3)}</span><span>{item.piecesPerBox}</span><span>{item.kgPerBox.toFixed(3)}</span>
+              <span>{stockAmount(pieces)}</span><span>{stockAmount(pieces / item.piecesPerBox)}</span><span>{stockAmount(pieces * item.kgPerPiece)}</span>
+            </div>;
+          })}
+        </div>
+      </Panel>
+
       <Panel title="Stock Movement" className="full-row-panel">
         {stock.movements.length ? (
           <div className="stock-movement-groups">
             <StockMovementGroup title="Stock Updation" rows={stockUpdates} emptyText="No stock updates yet." onDelete={deleteMovement} />
+            <StockMovementGroup title="Finished Goods Updation" rows={finishedStockUpdates} emptyText="No finished-goods updates yet." onDelete={deleteMovement} />
+            <StockMovementGroup title="Billing Sales" rows={billingSales} emptyText="No billing deductions yet." onDelete={deleteMovement} />
             <StockMovementGroup title="Dispatching" rows={dispatches} emptyText="No dispatches yet." onDelete={deleteMovement} />
           </div>
         ) : <p className="empty-note">No stock movement yet.</p>}
@@ -2152,7 +2324,7 @@ function StockMovementGroup({ title, rows, emptyText, onDelete }) {
             <div className="data-row" key={movement.id}>
               <span>{movement.date}</span>
               <span>{movement.item}</span>
-              <span>{stockAmount(movement.quantity)} {movement.unit}</span>
+              <span>{stockAmount(movement.quantity)} {movement.unit}{movement.kg !== undefined ? ` / ${stockAmount(movement.kg)} kg` : ""}</span>
               <span>{movement.note}</span>
               <span>
                 <button type="button" className="icon-action danger" aria-label={`Delete ${movement.item} ${movement.type.toLowerCase()} record`} title="Delete record" onClick={() => onDelete(movement)}>

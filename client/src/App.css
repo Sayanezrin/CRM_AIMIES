@@ -968,6 +968,17 @@ button:disabled {
   overflow: auto;
 }
 
+.finished-stock-table {
+  max-height: 520px;
+  overflow: auto;
+}
+
+.finished-stock-table .data-head,
+.finished-stock-table .data-row {
+  grid-template-columns: minmax(190px, 1fr) 105px 105px 105px 130px 120px 110px;
+  min-width: 940px;
+}
+
 .stock-movement-groups {
   display: grid;
   gap: 18px;
