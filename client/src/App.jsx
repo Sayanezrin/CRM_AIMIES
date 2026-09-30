@@ -2185,7 +2185,7 @@ function StockPage({ store, commit }) {
 
   return (
     <DashboardGrid>
-      <Panel title="Stock Updater">
+      <Panel title="Raw Material Stock Updater">
         <form className="stock-form" onSubmit={addMaterialStock}>
           <label>Material
             <select value={topUp.material} onChange={(event) => setTopUp({ ...topUp, material: event.target.value })}>
@@ -2202,11 +2202,11 @@ function StockPage({ store, commit }) {
         </form>
       </Panel>
 
-      <Panel title="Finished Coconut Oil Stock">
+      <Panel title="Stock Updater - Coconut Oil Items">
         <form className="stock-form" onSubmit={addFinishedGoodsStock}>
-          <label>Item
+          <label>Stock Item
             <select value={finishedTopUp.stockKey} onChange={(event) => setFinishedTopUp({ ...finishedTopUp, stockKey: event.target.value })}>
-              {oilPackConversions.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+              {oilPackConversions.map((item) => <option key={item.id} value={item.id}>{item.name} - {item.kgPerPiece.toFixed(3)} kg × {item.piecesPerBox} pcs/box</option>)}
             </select>
           </label>
           <label>Quantity
@@ -2284,9 +2284,9 @@ function StockPage({ store, commit }) {
         </div>
       </Panel>
 
-      <Panel title="Finished Coconut Oil Inventory" className="full-row-panel">
+      <Panel title="Coconut Oil Items in Stock" className="full-row-panel">
         <div className="data-table finished-stock-table">
-          <div className="data-head"><span>Item</span><span>KG / Piece</span><span>Pieces / Box</span><span>KG / Box</span><span>Available Pieces</span><span>Available Boxes</span><span>Total KG</span></div>
+          <div className="data-head"><span>Items</span><span>Gram / KG</span><span>Qty per Box</span><span>Total Qty / Box</span><span>Available Pieces</span><span>Available Boxes</span><span>Available Total KG</span></div>
           {oilPackConversions.map((item) => {
             const pieces = Number(stock.finishedGoods[item.id] || 0);
             return <div className="data-row" key={item.id}>
