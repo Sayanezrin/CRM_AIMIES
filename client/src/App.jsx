@@ -277,7 +277,7 @@ const financeExportColumns = financeRegisterColumns;
 const TOAST_EVENT = "aimies-toast";
 
 const stockMaterials = [
-  { id: "oil", name: "Oil", unit: "L" },
+  { id: "oil", name: "Coconut Oil", unit: "kg" },
   { id: "bottle500", name: "500 ml Bottle", unit: "pcs" },
   { id: "bottle1l", name: "1 L Bottle", unit: "pcs" },
   { id: "bottle2l", name: "2 L Bottle", unit: "pcs" },
@@ -292,11 +292,41 @@ const stockMaterials = [
   { id: "canCap", name: "Can Cap", unit: "pcs" },
   { id: "band", name: "Band", unit: "pcs" },
   { id: "plastic", name: "Plastic / Wrap", unit: "pcs" },
-  { id: "box500", name: "500 ml Box", unit: "pcs" },
-  { id: "box1l", name: "1 L Box", unit: "pcs" },
-  { id: "box2l", name: "2 L Box", unit: "pcs" },
-  { id: "box5l", name: "5 L Box", unit: "pcs" },
-  { id: "box15kg", name: "15 kg Box", unit: "pcs" }
+  { id: "box500", name: "500 ml Bottle Carton Box", unit: "pcs" },
+  { id: "box1l", name: "1 L Bottle Carton Box", unit: "pcs" },
+  { id: "box2l", name: "2 L Bottle Carton Box", unit: "pcs" },
+  { id: "box5l", name: "5 L Can Carton Box", unit: "pcs" },
+  { id: "box15kg", name: "15 kg Carton Box", unit: "pcs" },
+  { id: "pouch1l", name: "1 L Pouch", unit: "pcs" },
+  { id: "pouch500", name: "1/2 L Pouch", unit: "pcs" },
+  { id: "pouch800", name: "800 gm Pouch", unit: "pcs" },
+  { id: "pouch400", name: "400 gm Pouch", unit: "pcs" },
+  { id: "bottle910", name: "910 ml Bottle", unit: "pcs" },
+  { id: "bottle455", name: "455 ml Bottle", unit: "pcs" },
+  { id: "bottle900", name: "900 ml Bottle", unit: "pcs" },
+  { id: "bottle450", name: "450 ml Bottle", unit: "pcs" },
+  { id: "yellowBottle2l", name: "Yellow 2 L Bottle", unit: "pcs" },
+  { id: "yellowBottle5l", name: "Yellow 5 L Bottle", unit: "pcs" },
+  { id: "stickerPouch1l", name: "1 L Pouch Sticker", unit: "pcs" },
+  { id: "stickerPouch500", name: "1/2 L Pouch Sticker", unit: "pcs" },
+  { id: "stickerPouch800", name: "800 gm Pouch Sticker", unit: "pcs" },
+  { id: "stickerPouch400", name: "400 gm Pouch Sticker", unit: "pcs" },
+  { id: "sticker910", name: "910 ml Bottle Sticker", unit: "pcs" },
+  { id: "sticker455", name: "455 ml Bottle Sticker", unit: "pcs" },
+  { id: "sticker900", name: "900 ml Bottle Sticker", unit: "pcs" },
+  { id: "sticker450", name: "450 ml Bottle Sticker", unit: "pcs" },
+  { id: "stickerYellow2l", name: "Yellow 2 L Bottle Sticker", unit: "pcs" },
+  { id: "stickerYellow5l", name: "Yellow 5 L Bottle Sticker", unit: "pcs" },
+  { id: "boxPouch1l", name: "1 L Pouch Carton Box", unit: "pcs" },
+  { id: "boxPouch500", name: "1/2 L Pouch Carton Box", unit: "pcs" },
+  { id: "boxPouch800", name: "800 gm Pouch Carton Box", unit: "pcs" },
+  { id: "boxPouch400", name: "400 gm Pouch Carton Box", unit: "pcs" },
+  { id: "box910", name: "910 ml Bottle Carton Box", unit: "pcs" },
+  { id: "box455", name: "455 ml Bottle Carton Box", unit: "pcs" },
+  { id: "box900", name: "900 ml Bottle Carton Box", unit: "pcs" },
+  { id: "box450", name: "450 ml Bottle Carton Box", unit: "pcs" },
+  { id: "boxYellow2l", name: "Yellow 2 L Bottle Carton Box", unit: "pcs" },
+  { id: "boxYellow5l", name: "Yellow 5 L Bottle Carton Box", unit: "pcs" }
 ];
 const stockMaterialMap = Object.fromEntries(stockMaterials.map((material) => [material.id, material]));
 const stockProducts = [
@@ -307,54 +337,23 @@ const stockProducts = [
   { id: "p15kg", name: "15 kg Can", piecesPerCase: 1, drawPerPiece: { oil: 16.3, can15kg: 1, sticker15kg: 1, canCap: 1, band: 1 }, drawPerCase: { plastic: 1, box15kg: 1 } }
 ];
 const oilPackConversions = [
-  { id: "pouch-1l", name: "Pouch 1 Ltr", kgPerPiece: 0.91, piecesPerBox: 10 },
-  { id: "pouch-half-ltr", name: "Pouch 1/2 Ltr", kgPerPiece: 0.455, piecesPerBox: 20 },
-  { id: "bottle-1l", name: "Bottle 1 Ltr", kgPerPiece: 0.91, piecesPerBox: 12 },
-  { id: "bottle-half-ltr", name: "Bottle 1/2 Ltr", kgPerPiece: 0.455, piecesPerBox: 24 },
-  { id: "bottle-910ml", name: "Bottle 910 ML", kgPerPiece: 0.828, piecesPerBox: 12 },
-  { id: "bottle-455ml", name: "Bottle 455 ML", kgPerPiece: 0.414, piecesPerBox: 24 },
-  { id: "yellow-bottle-2l", name: "Yellow Bottle 2 Ltr", kgPerPiece: 1.82, piecesPerBox: 6 },
-  { id: "yellow-bottle-5l", name: "Yellow Bottle 5 Ltr", kgPerPiece: 4.55, piecesPerBox: 4 },
-  { id: "pouch-800g", name: "Pouch 800 Gm", kgPerPiece: 0.8, piecesPerBox: 10 },
-  { id: "pouch-400g", name: "Pouch 400 Gm", kgPerPiece: 0.4, piecesPerBox: 20 },
-  { id: "jar-15kg", name: "Jar 15 Kg", kgPerPiece: 15, piecesPerBox: 1 },
-  { id: "bottle-900ml", name: "Bottle 900 ML", kgPerPiece: 0.819, piecesPerBox: 12 },
-  { id: "bottle-450ml", name: "Bottle 450 ML", kgPerPiece: 0.41, piecesPerBox: 24 }
+  { id: "pouch-1l", name: "Pouch 1 Ltr", kgPerPiece: 0.91, piecesPerBox: 10, drawPerPiece: { pouch1l: 1, stickerPouch1l: 1 }, drawPerBox: { boxPouch1l: 1 } },
+  { id: "pouch-half-ltr", name: "Pouch 1/2 Ltr", kgPerPiece: 0.455, piecesPerBox: 20, drawPerPiece: { pouch500: 1, stickerPouch500: 1 }, drawPerBox: { boxPouch500: 1 } },
+  { id: "bottle-1l", name: "Bottle 1 Ltr", kgPerPiece: 0.91, piecesPerBox: 12, drawPerPiece: { bottle1l: 1, sticker1l: 1, bottleCap: 1, band: 1 }, drawPerBox: { box1l: 1 } },
+  { id: "bottle-half-ltr", name: "Bottle 1/2 Ltr", kgPerPiece: 0.455, piecesPerBox: 24, drawPerPiece: { bottle500: 1, sticker500: 1, bottleCap: 1, band: 1 }, drawPerBox: { box500: 1 } },
+  { id: "bottle-910ml", name: "Bottle 910 ML", kgPerPiece: 0.828, piecesPerBox: 12, drawPerPiece: { bottle910: 1, sticker910: 1, bottleCap: 1, band: 1 }, drawPerBox: { box910: 1 } },
+  { id: "bottle-455ml", name: "Bottle 455 ML", kgPerPiece: 0.414, piecesPerBox: 24, drawPerPiece: { bottle455: 1, sticker455: 1, bottleCap: 1, band: 1 }, drawPerBox: { box455: 1 } },
+  { id: "yellow-bottle-2l", name: "Yellow Bottle 2 Ltr", kgPerPiece: 1.82, piecesPerBox: 6, drawPerPiece: { yellowBottle2l: 1, stickerYellow2l: 1, bottleCap: 1, band: 1 }, drawPerBox: { boxYellow2l: 1 } },
+  { id: "yellow-bottle-5l", name: "Yellow Bottle 5 Ltr", kgPerPiece: 4.55, piecesPerBox: 4, drawPerPiece: { yellowBottle5l: 1, stickerYellow5l: 1, bottleCap: 1, band: 1 }, drawPerBox: { boxYellow5l: 1 } },
+  { id: "pouch-800g", name: "Pouch 800 Gm", kgPerPiece: 0.8, piecesPerBox: 10, drawPerPiece: { pouch800: 1, stickerPouch800: 1 }, drawPerBox: { boxPouch800: 1 } },
+  { id: "pouch-400g", name: "Pouch 400 Gm", kgPerPiece: 0.4, piecesPerBox: 20, drawPerPiece: { pouch400: 1, stickerPouch400: 1 }, drawPerBox: { boxPouch400: 1 } },
+  { id: "jar-15kg", name: "Jar 15 Kg", kgPerPiece: 15, piecesPerBox: 1, drawPerPiece: { can15kg: 1, sticker15kg: 1, canCap: 1, band: 1 }, drawPerBox: { box15kg: 1 } },
+  { id: "bottle-900ml", name: "Bottle 900 ML", kgPerPiece: 0.819, piecesPerBox: 12, drawPerPiece: { bottle900: 1, sticker900: 1, bottleCap: 1, band: 1 }, drawPerBox: { box900: 1 } },
+  { id: "bottle-450ml", name: "Bottle 450 ML", kgPerPiece: 0.41, piecesPerBox: 24, drawPerPiece: { bottle450: 1, sticker450: 1, bottleCap: 1, band: 1 }, drawPerBox: { box450: 1 } }
 ].map((item) => ({ ...item, kgPerBox: item.kgPerPiece * item.piecesPerBox }));
 const oilPackConversionMap = Object.fromEntries(oilPackConversions.map((item) => [item.id, item]));
 const sellerOilItems = [
-  { id: "oil-half-bottle-box", name: "Aimies Coconut Oil 1/2 Ltr Bottle - (Box)", unit: "box", stockKey: "bottle-half-ltr", hsn: "15131900" },
-  { id: "oil-half-bottle-piece", name: "Aimies Coconut Oil 1/2 Ltr Bottle - Piece", unit: "piece", stockKey: "bottle-half-ltr", hsn: "15131900" },
-  { id: "oil1l", name: "Aimies Coconut Oil 1 Ltr Bottle - (Box)", unit: "box", stockKey: "bottle-1l", hsn: "15131900" },
-  { id: "oil-1l-bottle-piece", name: "Aimies Coconut Oil 1 Ltr Bottle - Piece", unit: "piece", stockKey: "bottle-1l", hsn: "15131900" },
-  { id: "oil-half-pouch-box", name: "Aimies Coconut Oil 1/2 Ltr Pouch - (Box)", unit: "box", stockKey: "pouch-half-ltr", hsn: "15131900" },
-  { id: "oil-half-pouch-piece", name: "Aimies Coconut Oil 1/2 Ltr Pouch - Piece", unit: "piece", stockKey: "pouch-half-ltr", hsn: "15131900" },
-  { id: "oil-1l-pouch-box", name: "Aimies Coconut Oil 1 Ltr Pouch - (Box)", unit: "box", stockKey: "pouch-1l", hsn: "15131900" },
-  { id: "oil-1l-pouch-piece", name: "Aimies Coconut Oil 1 Ltr Pouch - Piece", unit: "piece", stockKey: "pouch-1l", hsn: "15131900" },
-  { id: "oil-400g-pouch-box", name: "Aimies Coconut Oil 400 GM Pouch - (Box)", unit: "box", stockKey: "pouch-400g", hsn: "15131900" },
-  { id: "oil-400g-pouch-piece", name: "Aimies Coconut Oil 400 GM Pouch - (Piece)", unit: "piece", stockKey: "pouch-400g", hsn: "15131900" },
-  { id: "oil-455ml-bottle-box", name: "Aimies Coconut Oil 455 ML Bottle Box", unit: "box", stockKey: "bottle-455ml", hsn: "15131900" },
-  { id: "oil-455ml-bottle-piece", name: "Aimies Coconut Oil 455 ML Bottle Piece", unit: "piece", stockKey: "bottle-455ml", hsn: "15131900" },
-  { id: "oil-800g-pouch-box", name: "Aimies Coconut Oil 800 GM Pouch - (Box)", unit: "box", stockKey: "pouch-800g", hsn: "15131900" },
-  { id: "oil-800g-pouch-piece", name: "Aimies Coconut Oil 800 GM Pouch - (Piece)", unit: "piece", stockKey: "pouch-800g", hsn: "15131900" },
-  { id: "oil-910ml-bottle-box", name: "Aimies Coconut Oil 910 ML Bottle Box", unit: "box", stockKey: "bottle-910ml", hsn: "15131900" },
-  { id: "oil-910ml-bottle-piece", name: "Aimies Coconut Oil 910 ML Bottle Piece", unit: "piece", stockKey: "bottle-910ml", hsn: "15131900" },
-  { id: "oil-2l-bottle-box", name: "Aimies Coconut Oil 2 Ltr Bottle - Box", unit: "box", hsn: "15131900" },
-  { id: "oil2l", name: "Aimies Coconut Oil 2 Ltr Bottle Piece", unit: "piece", hsn: "15131900" },
-  { id: "oil-5l-jar-box", name: "Aimies Coconut Oil Jar 5 Ltr Box", unit: "box", hsn: "15131900" },
-  { id: "oil-5l-jar-piece", name: "Aimies Coconut Oil Jar 5 Ltr Piece", unit: "piece", hsn: "15131900" },
-  { id: "oil-15kg-jar", name: "Aimies Coconut Oil Jar 15 KG", unit: "piece", stockKey: "jar-15kg", hsn: "15131900" },
-  { id: "coconut-oil-15kg-jar", name: "Coconut Oil Jar 15 Kg", unit: "piece", stockKey: "jar-15kg", hsn: "15131900" },
-  { id: "oil-yellow-1l-box", name: "Aimies Coconut Oil Yellow Bottle 1 Ltr Box", unit: "box", hsn: "15131900" },
-  { id: "oil-yellow-1l-piece", name: "Aimies Coconut Oil Yellow Bottle 1 Ltr Piece", unit: "piece", hsn: "15131900" },
-  { id: "oil-yellow-2l-box", name: "Aimies Coconut Oil Yellow Bottle 2 Ltr Box", unit: "box", stockKey: "yellow-bottle-2l", hsn: "15131900" },
-  { id: "oil-yellow-2l-piece", name: "Aimies Coconut Oil Yellow Bottle 2 Ltr Piece", unit: "piece", stockKey: "yellow-bottle-2l", hsn: "15131900" },
-  { id: "oil-yellow-5l-box", name: "Aimies Coconut Oil Yellow Bottle 5 Ltr Box", unit: "box", stockKey: "yellow-bottle-5l", hsn: "15131900" },
-  { id: "oil-yellow-5l-piece", name: "Aimies Coconut Oil Yellow Bottle 5 Ltr Piece", unit: "piece", stockKey: "yellow-bottle-5l", hsn: "15131900" },
-  { id: "oil-900ml-bottle-box", name: "Aimies Coconut Oil 900 ML Bottle Box", unit: "box", stockKey: "bottle-900ml", hsn: "15131900" },
-  { id: "oil-900ml-bottle-piece", name: "Aimies Coconut Oil 900 ML Bottle Piece", unit: "piece", stockKey: "bottle-900ml", hsn: "15131900" },
-  { id: "oil-450ml-bottle-box", name: "Aimies Coconut Oil 450 ML Bottle Box", unit: "box", stockKey: "bottle-450ml", hsn: "15131900" },
-  { id: "oil-450ml-bottle-piece", name: "Aimies Coconut Oil 450 ML Bottle Piece", unit: "piece", stockKey: "bottle-450ml", hsn: "15131900" },
+  ...oilPackConversions.map((item) => ({ id: `oil-${item.id}`, name: `Aimies Coconut Oil ${item.name}`, unit: "piece", stockKey: item.id, hsn: "15131900" })),
   { id: "coconut-oil", name: "Coconut Oil", unit: "litre", rawMaterialId: "oil", hsn: "15131900" },
   { id: "aimies-coconut-oil", name: "Aimies Coconut Oil", unit: "litre", rawMaterialId: "oil", hsn: "15131900" },
   { id: "custom", name: "Custom Oil Item", unit: "item", hsn: "15131900" }
@@ -392,6 +391,18 @@ function oilQuantityConversion(pack, quantity, unit) {
   if (unit === "litre") return { pieces: numericQuantity * LITRE_TO_KG / pack.kgPerPiece, kg: numericQuantity * LITRE_TO_KG };
   if (unit === "kg") return { pieces: numericQuantity / pack.kgPerPiece, kg: numericQuantity };
   return { pieces: numericQuantity, kg: numericQuantity * pack.kgPerPiece };
+}
+
+function billedMaterialDraw(pack, quantityPieces, quantityBoxes, quantityKg) {
+  const draw = { oil: Number(quantityKg || 0) };
+  if (!pack) return draw;
+  for (const [materialId, amount] of Object.entries(pack.drawPerPiece || {})) {
+    draw[materialId] = Number(draw[materialId] || 0) + amount * Number(quantityPieces || 0);
+  }
+  for (const [materialId, amount] of Object.entries(pack.drawPerBox || {})) {
+    draw[materialId] = Number(draw[materialId] || 0) + amount * Number(quantityBoxes || 0);
+  }
+  return draw;
 }
 
 function productCaseDraw(product) {
@@ -1322,7 +1333,7 @@ function sellerBillText(bill) {
     "Items:",
     ...bill.items.map((item, index) => `${index + 1}. ${item.name} - HSN ${item.hsn} - ${stockAmount(item.quantity)} ${item.unit} - ${money(item.amount)}`),
     "",
-    `Subtotal: ${money(bill.subtotal)}`,
+    `GST-inclusive Amount: ${money(bill.grossAmount ?? bill.total)}`,
     `Taxable Amount: ${money(bill.taxableAmount ?? bill.subtotal)}`,
     bill.cgst ? `CGST: ${money(bill.cgst)} | SGST: ${money(bill.sgst)}` : "",
     bill.igst ? `IGST: ${money(bill.igst)}` : "",
@@ -1341,7 +1352,7 @@ function SellerBillingPage({ store, commit, session }) {
   const bills = store.sellerBills || [];
   const [customer, setCustomer] = useState({ name: "", phone: "", address: "", gstin: "", state: "Kerala", stateCode: "32" });
   const [billInfo, setBillInfo] = useState({ supplyType: "B2C", paymentMode: "Cash", taxPercent: "5", applyRoundOff: false, destination: "", vehicleNumber: "", irn: "", ackNo: "", ackDate: "", ewayBillNo: "", signedQr: "", note: "" });
-  const [line, setLine] = useState({ product: "oil1l", customName: "", quantity: "1", quantityUnit: "box", amount: "" });
+  const [line, setLine] = useState({ product: "oil-bottle-1l", customName: "", quantity: "1", quantityUnit: "box", amount: "" });
   const [items, setItems] = useState([]);
   const [printTargetBill, setPrintTargetBill] = useState(null);
   const latestBill = bills[0] || null;
@@ -1350,10 +1361,11 @@ function SellerBillingPage({ store, commit, session }) {
   const selectedPack = oilPackConversionMap[selectedItem.stockKey];
   const lineConversion = oilQuantityConversion(selectedPack, line.quantity, line.quantityUnit);
   const stock = normalizeStock(store.stock);
-  const billSubtotal = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const billGrossAmount = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const taxPercent = Math.max(0, Number(billInfo.taxPercent || 0));
-  const taxAmount = billSubtotal * taxPercent / 100;
-  const preRoundTotal = billSubtotal + taxAmount;
+  const taxableAmount = taxPercent ? billGrossAmount / (1 + taxPercent / 100) : billGrossAmount;
+  const taxAmount = billGrossAmount - taxableAmount;
+  const preRoundTotal = billGrossAmount;
   const roundOff = billInfo.applyRoundOff ? Math.round(preRoundTotal) - preRoundTotal : 0;
   const billTotal = preRoundTotal + roundOff;
 
@@ -1383,6 +1395,7 @@ function SellerBillingPage({ store, commit, session }) {
         stockKey: selectedItem.stockKey || null,
         rawMaterialId: selectedItem.rawMaterialId || null,
         quantityPieces: selectedItem.stockKey ? lineConversion.pieces : null,
+        quantityBoxes: line.quantityUnit === "box" ? quantity : 0,
         quantityLitres: selectedItem.rawMaterialId ? (line.quantityUnit === "kg" ? quantity / LITRE_TO_KG : quantity) : null,
         quantityKg: lineConversion.kg || null,
         rate: amount / quantity,
@@ -1428,12 +1441,25 @@ function SellerBillingPage({ store, commit, session }) {
       toast(`Not enough ${oilPackConversionMap[stockKey]?.name || "item"} stock. Required ${stockAmount(pieces)} pieces; available ${stockAmount(available)}.`, "error");
       return;
     }
-    const rawOilRequired = items.reduce((total, item) => total + Number(item.quantityLitres || 0), 0);
-    if (rawOilRequired > Number(stock.levels.oil || 0) + 0.000001) {
-      toast(`Not enough bulk coconut oil stock. Required ${stockAmount(rawOilRequired)} L; available ${stockAmount(stock.levels.oil || 0)} L.`, "error");
+    const materialRequirements = items.reduce((required, item) => {
+      const draw = billedMaterialDraw(oilPackConversionMap[item.stockKey], item.quantityPieces, item.quantityBoxes, item.quantityKg);
+      for (const [materialId, amount] of Object.entries(draw)) required[materialId] = Number(required[materialId] || 0) + amount;
+      return required;
+    }, {});
+    const insufficientMaterial = Object.entries(materialRequirements).find(([materialId, amount]) => amount > Number(stock.levels[materialId] || 0) + 0.000001);
+    if (insufficientMaterial) {
+      const [materialId, amount] = insufficientMaterial;
+      const material = stockMaterialMap[materialId];
+      toast(`Not enough ${material?.name || "packing material"}. Required ${stockAmount(amount)} ${material?.unit || "units"}; available ${stockAmount(stock.levels[materialId] || 0)}.`, "error");
       return;
     }
 
+    const billItems = items.map((item) => {
+      const itemGrossAmount = Number(item.amount || 0);
+      const itemTaxableAmount = taxPercent ? itemGrossAmount / (1 + taxPercent / 100) : itemGrossAmount;
+      const materialDraw = billedMaterialDraw(oilPackConversionMap[item.stockKey], item.quantityPieces, item.quantityBoxes, item.quantityKg);
+      return { ...item, grossAmount: itemGrossAmount, taxableAmount: itemTaxableAmount, taxAmount: itemGrossAmount - itemTaxableAmount, materialDraw };
+    });
     const bill = {
       id: uid("BILL"),
       billNumber: `LS-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${String(bills.length + 1).padStart(3, "0")}`,
@@ -1454,18 +1480,19 @@ function SellerBillingPage({ store, commit, session }) {
       placeOfSupply: `${customerState}, Code: ${customerStateCode}`,
       paymentMode: billInfo.paymentMode,
       taxPercent,
-      taxableAmount: billSubtotal,
+      taxableAmount,
       taxAmount,
       taxType: customerState === "Kerala" ? "INTRASTATE" : "INTERSTATE",
       cgst: customerState === "Kerala" ? taxAmount / 2 : 0,
       sgst: customerState === "Kerala" ? taxAmount / 2 : 0,
       igst: customerState === "Kerala" ? 0 : taxAmount,
-      subtotal: billSubtotal,
+      subtotal: taxableAmount,
+      grossAmount: billGrossAmount,
       roundOff,
       destination: billInfo.destination.trim(),
       vehicleNumber: billInfo.vehicleNumber.trim().toUpperCase(),
       note: billInfo.note.trim(),
-      items,
+      items: billItems,
       total: billTotal,
       sellerName: session.name,
       sellerEmail: session.email,
@@ -1491,17 +1518,22 @@ function SellerBillingPage({ store, commit, session }) {
       const nextFinishedGoods = { ...currentStock.finishedGoods };
       const saleMovements = bill.items.filter((item) => item.stockKey).map((item, index) => {
         nextFinishedGoods[item.stockKey] = Number(nextFinishedGoods[item.stockKey] || 0) - Number(item.quantityPieces || 0);
+        for (const [materialId, amount] of Object.entries(item.materialDraw || {})) {
+          nextLevels[materialId] = Number(nextLevels[materialId] || 0) - amount;
+        }
         return {
           id: `${uid("SALE")}-${index}`, type: "Billing Sale", date: today(), stockKey: item.stockKey, billNumber: bill.billNumber,
-          item: item.name, quantity: item.quantity, unit: item.unit, pieces: item.quantityPieces, kg: item.quantityKg,
+          item: item.name, quantity: item.quantity, unit: item.unit, pieces: item.quantityPieces, kg: item.quantityKg, materialDraw: item.materialDraw,
           note: `${bill.billNumber} - ${customerName}`
         };
       });
       const rawSaleMovements = bill.items.filter((item) => item.rawMaterialId).map((item, index) => {
-        nextLevels[item.rawMaterialId] = Number(nextLevels[item.rawMaterialId] || 0) - Number(item.quantityLitres || 0);
+        for (const [materialId, amount] of Object.entries(item.materialDraw || {})) {
+          nextLevels[materialId] = Number(nextLevels[materialId] || 0) - amount;
+        }
         return {
           id: `${uid("SALE-RAW")}-${index}`, type: "Billing Sale", date: today(), rawMaterialId: item.rawMaterialId, billNumber: bill.billNumber,
-          item: item.name, quantity: item.quantity, unit: item.unit, litres: item.quantityLitres, kg: item.quantityKg,
+          item: item.name, quantity: item.quantity, unit: item.unit, kg: item.quantityKg, materialDraw: item.materialDraw,
           note: `${bill.billNumber} - ${customerName}`
         };
       });
@@ -1518,7 +1550,7 @@ function SellerBillingPage({ store, commit, session }) {
     setItems([]);
     setCustomer({ name: "", phone: "", address: "", gstin: "", state: "Kerala", stateCode: "32" });
     setBillInfo({ supplyType: "B2C", paymentMode: "Cash", taxPercent: "5", applyRoundOff: false, destination: "", vehicleNumber: "", irn: "", ackNo: "", ackDate: "", ewayBillNo: "", signedQr: "", note: "" });
-    toast("Bill generated and customer list updated.");
+    toast(`Bill generated. ${stockAmount(materialRequirements.oil || 0)} kg oil and required packing materials deducted from stock.`);
   };
 
   const shareByEmail = (bill) => {
@@ -1561,7 +1593,11 @@ function SellerBillingPage({ store, commit, session }) {
       const saleMovements = currentStock.movements.filter((movement) => movement.type === "Billing Sale" && movement.billNumber === deletedBill?.billNumber);
       saleMovements.forEach((movement) => {
         if (movement.stockKey) nextFinishedGoods[movement.stockKey] = Number(nextFinishedGoods[movement.stockKey] || 0) + Number(movement.pieces || 0);
-        if (movement.rawMaterialId) nextLevels[movement.rawMaterialId] = Number(nextLevels[movement.rawMaterialId] || 0) + Number(movement.litres || 0);
+        if (movement.materialDraw) {
+          for (const [materialId, amount] of Object.entries(movement.materialDraw)) nextLevels[materialId] = Number(nextLevels[materialId] || 0) + Number(amount || 0);
+        } else if (movement.rawMaterialId) {
+          nextLevels[movement.rawMaterialId] = Number(nextLevels[movement.rawMaterialId] || 0) + Number(movement.litres || 0);
+        }
       });
       return {
         ...current,
@@ -1650,11 +1686,11 @@ function SellerBillingPage({ store, commit, session }) {
           <label>Quantity<input type="number" min="0" step="0.001" value={line.quantity} onChange={(event) => setLine({ ...line, quantity: event.target.value })} /></label>
           <label>Quantity Unit
             <select value={line.quantityUnit} onChange={(event) => setLine({ ...line, quantityUnit: event.target.value })}>
-              {[selectedItem.unit, "litre", "kg"].filter((unit, index, all) => all.indexOf(unit) === index).map((unit) => <option key={unit} value={unit}>{unit}</option>)}
+              {(selectedPack ? ["box", "piece", "litre", "kg"] : [selectedItem.unit, "litre", "kg"]).filter((unit, index, all) => all.indexOf(unit) === index).map((unit) => <option key={unit} value={unit}>{unit}</option>)}
             </select>
           </label>
           <label>Converted Stock Quantity<input value={`${lineConversion.kg.toFixed(3)} kg${selectedPack ? ` / ${lineConversion.pieces.toFixed(3)} pieces` : ""}`} readOnly /></label>
-          <label>Manual Amount<input type="number" min="0" step="0.01" value={line.amount} onChange={(event) => setLine({ ...line, amount: event.target.value })} placeholder="Amount collected" /></label>
+          <label>Final Amount (Including GST)<input type="number" min="0" step="0.01" value={line.amount} onChange={(event) => setLine({ ...line, amount: event.target.value })} placeholder="Amount collected including GST" /></label>
           <button className="primary-button" type="submit">Add Item</button>
         </form>
       </Panel>
@@ -1674,8 +1710,9 @@ function SellerBillingPage({ store, commit, session }) {
               ))}
             </div>
             <div className="seller-live-totals">
-              <span>Taxable Amount: <b>{money(billSubtotal)}</b></span>
-              <span>GST ({taxPercent}%): <b>{money(taxAmount)}</b></span>
+              <span>GST-Inclusive Amount: <b>{money(billGrossAmount)}</b></span>
+              <span>Taxable Amount: <b>{money(taxableAmount)}</b></span>
+              <span>GST Included ({taxPercent}%): <b>{money(taxAmount)}</b></span>
               {billInfo.applyRoundOff ? <span>Round Off: <b>{money(roundOff)}</b></span> : null}
               <span>Total Invoice Amount: <b>{money(billTotal)}</b></span>
             </div>
@@ -1762,7 +1799,7 @@ function SellerBillHistoryTable({ bills, onPrint, onDelete }) {
 function SellerPerformaBillPage({ store, commit, session }) {
   const bills = store.sellerPerformaBills || [];
   const [buyer, setBuyer] = useState({ name: "", address1: "", address2: "", phone: "", state: "Kerala", stateCode: "32" });
-  const [line, setLine] = useState({ product: "oil1l", customName: "", quantity: "1", unit: "BOX", rateInclTax: "", taxableRate: "" });
+  const [line, setLine] = useState({ product: "oil-bottle-1l", customName: "", quantity: "1", unit: "BOX", rateInclTax: "", taxableRate: "" });
   const [items, setItems] = useState([]);
   const [printTargetBill, setPrintTargetBill] = useState(null);
   const selectedItem = sellerOilItems.find((item) => item.id === line.product) || sellerOilItems[0];
@@ -2033,6 +2070,7 @@ function BillPreview({ bill }) {
         ))}
       </div>
       <div className="seller-tax-summary">
+        <span><b>GST-Inclusive Amount</b>{money(bill.grossAmount ?? bill.total)}</span>
         <span><b>Taxable Amount</b>{money(bill.taxableAmount ?? bill.subtotal ?? bill.total)}</span>
         {(bill.taxType ? bill.taxType === "INTRASTATE" : !bill.igst) ? <><span><b>CGST ({Number(bill.taxPercent || 0) / 2}%)</b>{money(bill.cgst || 0)}</span><span><b>SGST ({Number(bill.taxPercent || 0) / 2}%)</b>{money(bill.sgst || 0)}</span></> : <span><b>IGST ({bill.taxPercent || 0}%)</b>{money(bill.igst || 0)}</span>}
         <span><b>Tax Amount</b>{money(bill.taxAmount ?? ((bill.cgst || 0) + (bill.sgst || 0) + (bill.igst || 0)))}</span>
@@ -2174,7 +2212,9 @@ function StockPage({ store, commit }) {
       if (movement.type === "Billing Sale" && movement.stockKey) {
         nextFinishedGoods[movement.stockKey] = Number(nextFinishedGoods[movement.stockKey] || 0) + Number(movement.pieces || 0);
       }
-      if (movement.type === "Billing Sale" && movement.rawMaterialId) {
+      if (movement.type === "Billing Sale" && movement.materialDraw) {
+        for (const [materialId, amount] of Object.entries(movement.materialDraw)) nextLevels[materialId] = Number(nextLevels[materialId] || 0) + Number(amount || 0);
+      } else if (movement.type === "Billing Sale" && movement.rawMaterialId) {
         nextLevels[movement.rawMaterialId] = Number(nextLevels[movement.rawMaterialId] || 0) + Number(movement.litres || 0);
       }
       return {
