@@ -9,7 +9,7 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "build": "cd client && npm install && npm run build && cd .. && node scripts/copy-client-dist.mjs",
     "server:check": "cd server && npm run check",
-    "test": "npm run server:check && cd client && npm run build"
+    "test": "npm run server:check && cd client && npm test"
   },
   "dependencies": {
     "cors": "^2.8.5",

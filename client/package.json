@@ -7,7 +7,7 @@
     "dev": "vite --host 127.0.0.1 --port 5174",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1 --port 4174",
-    "test": "npm run build"
+    "test": "node --test src/billing.test.js && npm run build"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import aimiesLogoImage from "./assets/aimies-logo.svg";
+import { applyMaterialDraw, billedMaterialDraw, calculateGstBreakdown, calculateInclusiveInvoice, LITRE_TO_KG, oilQuantityConversion } from "./billing.js";
 
 const STORAGE_KEY = "aimies.people.role.portal";
 const SESSION_KEY = "aimies.people.role.session";
@@ -372,7 +373,6 @@ const indianStates = [
 ].map(([name, code]) => ({ name, code }));
 const stateCodeByName = Object.fromEntries(indianStates.map((state) => [state.name, state.code]));
 const GST_RATES = [0, 5, 18];
-const LITRE_TO_KG = 0.91;
 const initialStockLevels = Object.fromEntries(stockMaterials.map((material) => [material.id, 0]));
 const initialFinishedGoods = Object.fromEntries(oilPackConversions.map((item) => [item.id, 0]));
 
@@ -382,27 +382,6 @@ function normalizeStock(stock = {}) {
     finishedGoods: { ...initialFinishedGoods, ...(stock.finishedGoods || {}) },
     movements: Array.isArray(stock.movements) ? stock.movements : []
   };
-}
-
-function oilQuantityConversion(pack, quantity, unit) {
-  const numericQuantity = Math.max(0, Number(quantity || 0));
-  if (!pack) return { pieces: 0, kg: unit === "litre" ? numericQuantity * LITRE_TO_KG : unit === "kg" ? numericQuantity : 0 };
-  if (unit === "box") return { pieces: numericQuantity * pack.piecesPerBox, kg: numericQuantity * pack.kgPerBox };
-  if (unit === "litre") return { pieces: numericQuantity * LITRE_TO_KG / pack.kgPerPiece, kg: numericQuantity * LITRE_TO_KG };
-  if (unit === "kg") return { pieces: numericQuantity / pack.kgPerPiece, kg: numericQuantity };
-  return { pieces: numericQuantity, kg: numericQuantity * pack.kgPerPiece };
-}
-
-function billedMaterialDraw(pack, quantityPieces, quantityBoxes, quantityKg) {
-  const draw = { oil: Number(quantityKg || 0) };
-  if (!pack) return draw;
-  for (const [materialId, amount] of Object.entries(pack.drawPerPiece || {})) {
-    draw[materialId] = Number(draw[materialId] || 0) + amount * Number(quantityPieces || 0);
-  }
-  for (const [materialId, amount] of Object.entries(pack.drawPerBox || {})) {
-    draw[materialId] = Number(draw[materialId] || 0) + amount * Number(quantityBoxes || 0);
-  }
-  return draw;
 }
 
 function productCaseDraw(product) {
@@ -1360,14 +1339,10 @@ function SellerBillingPage({ store, commit, session }) {
   const selectedItem = sellerOilItems.find((item) => item.id === line.product) || sellerOilItems[0];
   const selectedPack = oilPackConversionMap[selectedItem.stockKey];
   const lineConversion = oilQuantityConversion(selectedPack, line.quantity, line.quantityUnit);
-  const stock = normalizeStock(store.stock);
   const billGrossAmount = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const taxPercent = Math.max(0, Number(billInfo.taxPercent || 0));
-  const taxableAmount = taxPercent ? billGrossAmount / (1 + taxPercent / 100) : billGrossAmount;
-  const taxAmount = billGrossAmount - taxableAmount;
-  const preRoundTotal = billGrossAmount;
-  const roundOff = billInfo.applyRoundOff ? Math.round(preRoundTotal) - preRoundTotal : 0;
-  const billTotal = preRoundTotal + roundOff;
+  const inclusiveTotals = calculateInclusiveInvoice(billGrossAmount, taxPercent, billInfo.applyRoundOff);
+  const { taxableAmount, taxAmount, roundOff, total: billTotal } = inclusiveTotals;
 
   const selectCustomer = (phone) => {
     const savedCustomer = customers.find((item) => item.phone === phone);
@@ -1430,36 +1405,19 @@ function SellerBillingPage({ store, commit, session }) {
       toast("Add at least one oil item before generating bill.", "error");
       return;
     }
-    const stockRequired = items.reduce((required, item) => {
-      if (item.stockKey) required[item.stockKey] = Number(required[item.stockKey] || 0) + Number(item.quantityPieces || 0);
-      return required;
-    }, {});
-    const insufficientItem = Object.entries(stockRequired).find(([stockKey, pieces]) => pieces > Number(stock.finishedGoods[stockKey] || 0) + 0.000001);
-    if (insufficientItem) {
-      const [stockKey, pieces] = insufficientItem;
-      const available = Number(stock.finishedGoods[stockKey] || 0);
-      toast(`Not enough ${oilPackConversionMap[stockKey]?.name || "item"} stock. Required ${stockAmount(pieces)} pieces; available ${stockAmount(available)}.`, "error");
-      return;
-    }
     const materialRequirements = items.reduce((required, item) => {
       const draw = billedMaterialDraw(oilPackConversionMap[item.stockKey], item.quantityPieces, item.quantityBoxes, item.quantityKg);
       for (const [materialId, amount] of Object.entries(draw)) required[materialId] = Number(required[materialId] || 0) + amount;
       return required;
     }, {});
-    const insufficientMaterial = Object.entries(materialRequirements).find(([materialId, amount]) => amount > Number(stock.levels[materialId] || 0) + 0.000001);
-    if (insufficientMaterial) {
-      const [materialId, amount] = insufficientMaterial;
-      const material = stockMaterialMap[materialId];
-      toast(`Not enough ${material?.name || "packing material"}. Required ${stockAmount(amount)} ${material?.unit || "units"}; available ${stockAmount(stock.levels[materialId] || 0)}.`, "error");
-      return;
-    }
 
     const billItems = items.map((item) => {
       const itemGrossAmount = Number(item.amount || 0);
-      const itemTaxableAmount = taxPercent ? itemGrossAmount / (1 + taxPercent / 100) : itemGrossAmount;
+      const itemTotals = calculateInclusiveInvoice(itemGrossAmount, taxPercent);
       const materialDraw = billedMaterialDraw(oilPackConversionMap[item.stockKey], item.quantityPieces, item.quantityBoxes, item.quantityKg);
-      return { ...item, grossAmount: itemGrossAmount, taxableAmount: itemTaxableAmount, taxAmount: itemGrossAmount - itemTaxableAmount, materialDraw };
+      return { ...item, grossAmount: itemGrossAmount, taxableAmount: itemTotals.taxableAmount, taxAmount: itemTotals.taxAmount, materialDraw };
     });
+    const gstBreakdown = calculateGstBreakdown(customerState, taxAmount);
     const bill = {
       id: uid("BILL"),
       billNumber: `LS-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${String(bills.length + 1).padStart(3, "0")}`,
@@ -1482,10 +1440,10 @@ function SellerBillingPage({ store, commit, session }) {
       taxPercent,
       taxableAmount,
       taxAmount,
-      taxType: customerState === "Kerala" ? "INTRASTATE" : "INTERSTATE",
-      cgst: customerState === "Kerala" ? taxAmount / 2 : 0,
-      sgst: customerState === "Kerala" ? taxAmount / 2 : 0,
-      igst: customerState === "Kerala" ? 0 : taxAmount,
+      taxType: gstBreakdown.taxType,
+      cgst: gstBreakdown.cgst,
+      sgst: gstBreakdown.sgst,
+      igst: gstBreakdown.igst,
       subtotal: taxableAmount,
       grossAmount: billGrossAmount,
       roundOff,
@@ -1514,13 +1472,11 @@ function SellerBillingPage({ store, commit, session }) {
       };
       nextCustomer.totalBills += 1;
       const currentStock = normalizeStock(current.stock);
-      const nextLevels = { ...currentStock.levels };
+      let nextLevels = { ...currentStock.levels };
       const nextFinishedGoods = { ...currentStock.finishedGoods };
       const saleMovements = bill.items.filter((item) => item.stockKey).map((item, index) => {
         nextFinishedGoods[item.stockKey] = Number(nextFinishedGoods[item.stockKey] || 0) - Number(item.quantityPieces || 0);
-        for (const [materialId, amount] of Object.entries(item.materialDraw || {})) {
-          nextLevels[materialId] = Number(nextLevels[materialId] || 0) - amount;
-        }
+        nextLevels = applyMaterialDraw(nextLevels, item.materialDraw);
         return {
           id: `${uid("SALE")}-${index}`, type: "Billing Sale", date: today(), stockKey: item.stockKey, billNumber: bill.billNumber,
           item: item.name, quantity: item.quantity, unit: item.unit, pieces: item.quantityPieces, kg: item.quantityKg, materialDraw: item.materialDraw,
@@ -1528,9 +1484,7 @@ function SellerBillingPage({ store, commit, session }) {
         };
       });
       const rawSaleMovements = bill.items.filter((item) => item.rawMaterialId).map((item, index) => {
-        for (const [materialId, amount] of Object.entries(item.materialDraw || {})) {
-          nextLevels[materialId] = Number(nextLevels[materialId] || 0) - amount;
-        }
+        nextLevels = applyMaterialDraw(nextLevels, item.materialDraw);
         return {
           id: `${uid("SALE-RAW")}-${index}`, type: "Billing Sale", date: today(), rawMaterialId: item.rawMaterialId, billNumber: bill.billNumber,
           item: item.name, quantity: item.quantity, unit: item.unit, kg: item.quantityKg, materialDraw: item.materialDraw,
@@ -1550,7 +1504,7 @@ function SellerBillingPage({ store, commit, session }) {
     setItems([]);
     setCustomer({ name: "", phone: "", address: "", gstin: "", state: "Kerala", stateCode: "32" });
     setBillInfo({ supplyType: "B2C", paymentMode: "Cash", taxPercent: "5", applyRoundOff: false, destination: "", vehicleNumber: "", irn: "", ackNo: "", ackDate: "", ewayBillNo: "", signedQr: "", note: "" });
-    toast(`Bill generated. ${stockAmount(materialRequirements.oil || 0)} kg oil and required packing materials deducted from stock.`);
+    toast(`Bill generated. ${stockAmount(materialRequirements.oil || 0)} kg oil and required packing materials deducted; any shortages are shown as negative stock.`);
   };
 
   const shareByEmail = (bill) => {
@@ -1588,13 +1542,13 @@ function SellerBillingPage({ store, commit, session }) {
     commit((current) => {
       const deletedBill = (current.sellerBills || []).find((bill) => bill.id === billId);
       const currentStock = normalizeStock(current.stock);
-      const nextLevels = { ...currentStock.levels };
+      let nextLevels = { ...currentStock.levels };
       const nextFinishedGoods = { ...currentStock.finishedGoods };
       const saleMovements = currentStock.movements.filter((movement) => movement.type === "Billing Sale" && movement.billNumber === deletedBill?.billNumber);
       saleMovements.forEach((movement) => {
         if (movement.stockKey) nextFinishedGoods[movement.stockKey] = Number(nextFinishedGoods[movement.stockKey] || 0) + Number(movement.pieces || 0);
         if (movement.materialDraw) {
-          for (const [materialId, amount] of Object.entries(movement.materialDraw)) nextLevels[materialId] = Number(nextLevels[materialId] || 0) + Number(amount || 0);
+          nextLevels = applyMaterialDraw(nextLevels, movement.materialDraw, 1);
         } else if (movement.rawMaterialId) {
           nextLevels[movement.rawMaterialId] = Number(nextLevels[movement.rawMaterialId] || 0) + Number(movement.litres || 0);
         }
@@ -2186,7 +2140,7 @@ function StockPage({ store, commit }) {
     const confirmed = window.confirm(`Delete this ${movement.type.toLowerCase()} record for ${movement.item}?`);
     if (!confirmed) return;
     commitStock((current) => {
-      const nextLevels = { ...current.levels };
+      let nextLevels = { ...current.levels };
       const nextFinishedGoods = { ...current.finishedGoods };
       if (movement.type === "Stock Updated") {
         const materialId = movement.materialId || stockMaterials.find((material) => material.name === movement.item)?.id;
@@ -2213,7 +2167,7 @@ function StockPage({ store, commit }) {
         nextFinishedGoods[movement.stockKey] = Number(nextFinishedGoods[movement.stockKey] || 0) + Number(movement.pieces || 0);
       }
       if (movement.type === "Billing Sale" && movement.materialDraw) {
-        for (const [materialId, amount] of Object.entries(movement.materialDraw)) nextLevels[materialId] = Number(nextLevels[materialId] || 0) + Number(amount || 0);
+        nextLevels = applyMaterialDraw(nextLevels, movement.materialDraw, 1);
       } else if (movement.type === "Billing Sale" && movement.rawMaterialId) {
         nextLevels[movement.rawMaterialId] = Number(nextLevels[movement.rawMaterialId] || 0) + Number(movement.litres || 0);
       }
